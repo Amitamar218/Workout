@@ -134,6 +134,16 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 .sync-synced{background:var(--green)}
 .sync-error{background:var(--red)}
 @keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
+/* adjustment badges */
+.adj-pill{display:inline-flex;align-items:center;gap:3px;font-size:10px;font-weight:700;padding:2px 7px;border-radius:10px}
+.adj-up{background:rgba(34,197,94,.15);color:var(--green)}
+.adj-down{background:rgba(239,68,68,.12);color:var(--red)}
+.adj-hold{background:rgba(156,163,175,.08);color:var(--t4)}
+/* goal selection buttons */
+.goal-opt{background:var(--bg3);border:1px solid var(--bd);border-radius:var(--r);padding:14px 16px;width:100%;cursor:pointer;text-align:right;display:block;margin-bottom:9px;transition:border-color .15s}
+.goal-opt:active{border-color:var(--or);background:var(--bg4)}
+.goal-opt-title{font-size:15px;font-weight:700;margin-bottom:3px;color:var(--text)}
+.goal-opt-sub{font-size:12px;color:var(--t3)}
 </style>
 </head>
 <body>
@@ -224,7 +234,9 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
     </div>
     <div class="slbl">הערת מאמן</div>
     <div class="coach-box" style="margin-bottom:12px"><div class="coach-text" id="s-coach">–</div></div>
-    <div id="s-flags" style="padding:0 14px;margin-bottom:14px"></div>
+    <div id="s-flags" style="padding:0 14px;margin-bottom:10px"></div>
+    <div class="slbl" id="s-adj-lbl" style="display:none">התאמות לאימון הבא</div>
+    <div id="s-adjustments" style="padding:0 14px;margin-bottom:14px"></div>
     <div style="padding:0 14px"><button class="btn" onclick="finishSum()">חזרה לבית</button></div>
     <div style="height:70px"></div>
   </div>
@@ -307,7 +319,10 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 
 <!-- PROGRESS -->
 <div id="s-progress" class="screen">
-  <div style="padding:18px 14px 6px;font-size:19px;font-weight:800">התקדמות</div>
+  <div style="padding:18px 14px 6px;display:flex;justify-content:space-between;align-items:center">
+    <div style="font-size:19px;font-weight:800">התקדמות</div>
+    <button onclick="openModal('modal-goal')" style="background:var(--bg4);border:1px solid var(--bd);border-radius:var(--rsm);padding:5px 11px;font-size:12px;font-weight:600;color:var(--t2);cursor:pointer" id="pr-goal-btn">מטרה: –</button>
+  </div>
   <div class="scroll" id="prog-content">
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:7px;padding:0 14px 14px">
       <div class="sum-stat"><div class="sum-val" id="pr-done">0/0</div><div class="sum-lbl">אימונים</div></div>
@@ -316,6 +331,9 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
     <div class="slbl">תובנות מאמן</div>
     <div id="pr-insights"></div>
     <div class="div"></div>
+    <div class="slbl" id="pr-adj-lbl" style="display:none">התאמות משקל פעילות</div>
+    <div id="pr-adjustments" style="padding:0 14px"></div>
+    <div class="div" id="pr-adj-div" style="display:none"></div>
     <div class="slbl">סטטוס תרגילים</div>
     <div id="pr-exlist" style="padding:0 14px"></div>
     <div style="height:70px"></div>
@@ -342,6 +360,27 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
     <svg viewBox="0 0 24 24"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>התקדמות
   </button>
 </nav>
+
+<!-- MODAL: goal setting -->
+<div class="modal-bg" id="modal-goal">
+  <div class="modal" onclick="event.stopPropagation()">
+    <div class="modal-title">מה המטרה שלך? 🎯</div>
+    <div class="modal-sub">האפליקציה תכוון את המשקלים אוטומטית אחרי כל אימון לפי הRIR שלך.</div>
+    <button class="goal-opt" onclick="setGoal('hypertrophy')">
+      <div class="goal-opt-title">💪 בניית שריר (היפרטרופי)</div>
+      <div class="goal-opt-sub">יעד RIR 1–3 · מאמץ גבוה, שמירה על טכניקה</div>
+    </button>
+    <button class="goal-opt" onclick="setGoal('strength')">
+      <div class="goal-opt-title">🏋️ כוח מקסימלי</div>
+      <div class="goal-opt-sub">יעד RIR 0–2 · מאמץ גבוה מאוד</div>
+    </button>
+    <button class="goal-opt" onclick="setGoal('fitness')">
+      <div class="goal-opt-title">🏃 כושר כללי</div>
+      <div class="goal-opt-sub">יעד RIR 3–4 · מאמץ מתון ובר-קיימא</div>
+    </button>
+    <button class="btn2" onclick="closeModal('modal-goal')">סגור</button>
+  </div>
+</div>
 
 <!-- TOAST -->
 <div class="toast" id="toast"></div>
@@ -427,7 +466,7 @@ function setSyncIndicator(status){
 }
 
 // ─── STATE ───────────────────────────────────────────────────────────────────
-function defState(){return{tab:'home',workoutActive:false,currentWeek:2,wo:null,woKey:null,exIdx:0,setIdx:0,logs:[],allLogs:[],woStart:null,completedWos:{},savedWorkouts:{},bodyWeights:[88.2,87.9,88.1,87.8,87.5,null,null],weightNote:null}}
+function defState(){return{tab:'home',workoutActive:false,currentWeek:2,wo:null,woKey:null,exIdx:0,setIdx:0,logs:[],allLogs:[],woStart:null,completedWos:{},savedWorkouts:{},exerciseAdjustments:{},goal:null,bodyWeights:[88.2,87.9,88.1,87.8,87.5,null,null],weightNote:null}}
 let S=defState();
 function loadState(){
   try{
@@ -599,17 +638,27 @@ function renderWo(){
   // ── active set area ──
   const ex=wo.exercises[S.exIdx];
   if(ex){
+    const adj=S.exerciseAdjustments[ex.exercise];
+    const displayWeight=adj?adj.weight:ex.target_weight;
+    const isAdjusted=adj&&adj.weight!==ex.target_weight;
+    const adjBadge=isAdjusted?`<span class="adj-pill ${adj.direction==='up'?'adj-up':'adj-down'}" style="margin-right:6px">${adj.direction==='up'?'↑':'↓'} מותאם</span>`:'';
+    const weightDisplay=displayWeight.replace(/ ק״ג.*/,'');
     const as=document.createElement('div');as.className='aset fade-in';
     as.innerHTML=`
       <div class="aset-lbl">תרגיל ${S.exIdx+1}/${wo.exercises.length} · ${ex.muscle}</div>
       <div class="aset-name">${ex.exercise}</div>
       <div class="aset-stats">
-        <div class="astat"><div class="astat-v">${ex.target_weight.replace(/ ק״ג.*/,'')}</div><div class="astat-l">ק״ג</div></div>
+        <div class="astat">
+          <div class="astat-v">${weightDisplay}</div>
+          <div class="astat-l">ק״ג</div>
+          ${adjBadge}
+        </div>
         <div class="astat"><div class="astat-v">${ex.target_reps}</div><div class="astat-l">חזרות</div></div>
         <div class="astat"><div class="astat-v">${S.setIdx+1}/${ex.sets}</div><div class="astat-l">סט</div></div>
       </div>
+      ${isAdjusted?`<div class="note-tip">🤖 משקל מקורי: ${ex.target_weight} | ${adj.reason}</div>`:''}
       <div class="coach-tip">בצע ${ex.target_reps} חזרות בדיוק. לא יותר, לא פחות.</div>
-      ${ex.target_weight.includes('גרביטון')?'<div class="note-tip">💬 '+ex.target_weight+'</div>':''}
+      ${displayWeight.includes('גרביטון')?'<div class="note-tip">💬 '+displayWeight+'</div>':''}
       <div style="display:flex;gap:8px">
         <button class="btn" onclick="completeSet()" style="flex:1;font-size:16px;padding:15px">✅ סיימתי סט</button>
         <button onclick="openUndoModal()" title="בטל סט אחרון" style="background:var(--bg4);border:1px solid var(--bd);border-radius:var(--r);padding:15px 14px;cursor:pointer;font-size:18px;color:var(--t3)">↩</button>
@@ -690,22 +739,25 @@ function jumpToEx(ei){
 }
 
 // ─── RIR / SET LOGGING ───────────────────────────────────────────────────────
-let curAbn=null,curRIR=null;
+let curAbn=null,curRIR=null,curComment='';
 function completeSet(){
   const ex=S.wo.exercises[S.exIdx];
   const sc=document.getElementById('wo-scroll');
   const as=sc.querySelector('.aset');if(!as)return;
-  curAbn=null;curRIR=null;
+  curAbn=null;curRIR=null;curComment='';
   as.innerHTML=`
     <div class="rir-title">הזן RIR – ${ex.exercise}</div>
     <div class="rir-sub">כמה חזרות נקיות נותרו? עצרת ב-${ex.target_reps}.</div>
     <div class="rir-grid">
       ${[0,1,2,3,4,'5+'].map((r,i)=>`<button class="rir-btn" onclick="selRIR(this,${i<5?r:"'5+'"})"> ${r}</button>`).join('')}
     </div>
-    <div class="abn-title">הערה חריגה (אופציונלי)</div>
+    <div class="abn-title">הערה (אופציונלי) – ציוד תפוס, משקל שונה, כאב...</div>
     <div class="abn-grid">
       ${['כבד מדי','קל מדי','כאב','טכניקה לא טובה','לא הצלחתי יעד','ציוד לא זמין'].map(n=>`<button class="abn-btn" onclick="togAbn(this,'${n}')">${n}</button>`).join('')}
     </div>
+    <textarea id="set-comment" placeholder="הערה חופשית... (לדוגמה: משקל 15 ק״ג כי 17.5 היה תפוס)"
+      style="width:100%;background:var(--bg4);border:1px solid var(--bd);border-radius:var(--rsm);padding:10px;color:var(--text);font-size:13px;resize:none;height:58px;direction:rtl;font-family:inherit;margin-bottom:12px;display:block"
+      oninput="curComment=this.value"></textarea>
     <button class="btn" id="save-set-btn" onclick="saveSet()" style="opacity:.3;pointer-events:none;font-size:15px;padding:14px">שמור סט והמשך</button>
   `;
 }
@@ -731,9 +783,10 @@ function saveSet(){
     :lastSet?'הבא: '+S.wo.exercises[S.exIdx+1].exercise
     :'הבא: סט '+(S.setIdx+2)+' – '+ex.exercise;
 
-  S.logs.push({exIdx:S.exIdx,setIdx:S.setIdx,rir:rirVal,abn:curAbn,woKey:S.woKey});
-  S.allLogs.push({exIdx:S.exIdx,setIdx:S.setIdx,rir:rirVal,abn:curAbn,woKey:S.woKey,exName:ex.exercise,week:S.currentWeek});
-  curAbn=null;curRIR=null;
+  const commentVal=(curComment||'').trim()||null;
+  S.logs.push({exIdx:S.exIdx,setIdx:S.setIdx,rir:rirVal,abn:curAbn,comment:commentVal,woKey:S.woKey});
+  S.allLogs.push({exIdx:S.exIdx,setIdx:S.setIdx,rir:rirVal,abn:curAbn,comment:commentVal,woKey:S.woKey,exName:ex.exercise,week:S.currentWeek});
+  curAbn=null;curRIR=null;curComment='';
 
   // advance state ONCE here
   if(!lastSet){S.setIdx++;}
@@ -816,6 +869,22 @@ function showSum(){
     d.innerHTML='<div class="coach-text">📋 הושלמו '+S.logs.length+' מתוך '+totalSets+' סטים.</div>';
     fl.appendChild(d);
   }
+  // run dynamic plan adjustment before saving
+  computeAdjustments();
+  const adjChanges=S.wo?S.wo.exercises.map(ex=>S.exerciseAdjustments[ex.exercise]).filter(a=>a&&a.updatedAt===S.woKey&&a.direction!=='hold'):[];
+  const adjEl=document.getElementById('s-adjustments');
+  const adjLbl=document.getElementById('s-adj-lbl');
+  if(adjEl){adjEl.innerHTML='';}
+  if(adjChanges.length&&adjEl&&adjLbl){
+    adjLbl.style.display='';
+    adjChanges.forEach(a=>{
+      const d=document.createElement('div');d.className='coach-box';
+      d.style.borderRightColor=a.direction==='up'?'var(--green)':'var(--red)';
+      d.innerHTML=`<div class="coach-text"><span class="adj-pill ${a.direction==='up'?'adj-up':'adj-down'}">${a.direction==='up'?'↑ הוגדל':'↓ הופחת'}</span> ${a.reason}<br><strong style="color:var(--text)">משקל חדש: ${a.weight}</strong></div>`;
+      adjEl.appendChild(d);
+    });
+  } else if(adjLbl){adjLbl.style.display='none';}
+
   S.completedWos[S.woKey]=true;S.workoutActive=false;
   delete S.savedWorkouts[S.woKey]; // clear in-progress save on completion
   document.getElementById('nb-workout').classList.remove('wo-live');
@@ -1024,6 +1093,29 @@ function renderProgress(){
   const planned=S.currentWeek*3;
   document.getElementById('pr-done').textContent=total+'/'+(planned<=36?planned:36);
   document.getElementById('pr-pct').textContent=planned>0?Math.round(total/planned*100)+'%':'0%';
+  const goalNames={hypertrophy:'בניית שריר 💪',strength:'כוח 🏋️',fitness:'כושר כללי 🏃'};
+  const goalBtn=document.getElementById('pr-goal-btn');
+  if(goalBtn) goalBtn.textContent='מטרה: '+(goalNames[S.goal]||'לא נקבעה');
+
+  // show exercise adjustments
+  const adjEl=document.getElementById('pr-adjustments');
+  const adjLbl=document.getElementById('pr-adj-lbl');
+  const adjDiv=document.getElementById('pr-adj-div');
+  const adjEntries=Object.entries(S.exerciseAdjustments);
+  if(adjEl) adjEl.innerHTML='';
+  if(adjEntries.length&&adjEl){
+    if(adjLbl) adjLbl.style.display='';
+    if(adjDiv) adjDiv.style.display='';
+    adjEntries.forEach(([name,adj])=>{
+      const d=document.createElement('div');d.className='ins-card';
+      d.style.borderRightColor=adj.direction==='up'?'var(--green)':adj.direction==='down'?'var(--red)':'var(--bd)';
+      d.innerHTML=`<div class="ins-t" style="display:flex;align-items:center;gap:6px"><span>${name}</span><span class="adj-pill ${adj.direction==='up'?'adj-up':adj.direction==='down'?'adj-down':'adj-hold'}">${adj.direction==='up'?'↑ הוגדל':adj.direction==='down'?'↓ הופחת':'= נשמר'}</span></div><div class="ins-b">${adj.reason}<br><strong>משקל: ${adj.weight}</strong></div>`;
+      adjEl.appendChild(d);
+    });
+  } else {
+    if(adjLbl) adjLbl.style.display='none';
+    if(adjDiv) adjDiv.style.display='none';
+  }
   const ins=document.getElementById('pr-insights');ins.innerHTML='';
   const exStats={};
   S.allLogs.forEach(l=>{
@@ -1060,10 +1152,101 @@ function renderProgress(){
   });
 }
 
+// ─── GOAL & DYNAMIC PLAN ─────────────────────────────────────────────────────
+function setGoal(g){
+  S.goal=g;save();closeModal('modal-goal');
+  const names={hypertrophy:'בניית שריר 💪',strength:'כוח 🏋️',fitness:'כושר כללי 🏃'};
+  showToast('✅ מטרה: '+names[g]);
+  renderProgress();
+}
+
+// adjust a weight string by delta kg (positive=heavier, negative=lighter)
+// graviton assistance is inverted: less assistance number = harder
+function adjustWeightStr(weightStr, delta){
+  const isGraviton=weightStr.includes('גרביטון');
+  const m=weightStr.match(/([\d.]+)/);
+  if(!m) return weightStr;
+  const val=parseFloat(m[1]);
+  let newVal;
+  if(isGraviton){
+    newVal=Math.max(0,Math.round((val-delta)/2.5)*2.5);
+  } else {
+    newVal=Math.max(0,Math.round((val+delta)/2.5)*2.5);
+  }
+  return weightStr.replace(/([\d.]+)/,newVal%1===0?newVal.toString():newVal.toFixed(1));
+}
+
+// run after every completed workout — adjusts weights for each exercise based on RIR
+function computeAdjustments(){
+  if(!S.wo||!S.logs.length) return;
+  const targets={strength:{lo:0,hi:2},hypertrophy:{lo:1,hi:3},fitness:{lo:2,hi:4}};
+  const t=targets[S.goal||'hypertrophy'];
+
+  S.wo.exercises.forEach((ex,ei)=>{
+    const exLogs=S.logs.filter(l=>l.exIdx===ei);
+    if(!exLogs.length) return;
+    const rirs=exLogs.map(l=>typeof l.rir==='number'?l.rir:t.hi);
+    const avg=rirs.reduce((a,b)=>a+b,0)/rirs.length;
+    const cur=S.exerciseAdjustments[ex.exercise];
+    const baseWeight=cur?cur.weight:ex.target_weight;
+
+    let newWeight=baseWeight,direction='hold',reason='';
+    if(avg>t.hi+0.5){
+      newWeight=adjustWeightStr(baseWeight,2.5);
+      direction='up';
+      reason=`RIR ממוצע ${avg.toFixed(1)} – קל מדי. הוגדל ב-2.5 ק״ג.`;
+    } else if(avg<t.lo-0.5){
+      newWeight=adjustWeightStr(baseWeight,-2.5);
+      direction='down';
+      reason=`RIR ממוצע ${avg.toFixed(1)} – כבד מדי. הופחת ב-2.5 ק״ג.`;
+    } else {
+      reason=`RIR ממוצע ${avg.toFixed(1)} – בטווח היעד. נשמר על אותו משקל.`;
+    }
+    S.exerciseAdjustments[ex.exercise]={weight:newWeight,direction,reason,avgRIR:avg.toFixed(1),updatedAt:S.woKey};
+  });
+}
+
+// ─── QA TEST ──────────────────────────────────────────────────────────────────
+function runQA(){
+  const results=[];
+  const test=(name,fn)=>{try{results.push({name,pass:!!fn(),err:null});}catch(e){results.push({name,pass:false,err:e.message});}};
+
+  test('adjustWeightStr +2.5 regular', ()=>adjustWeightStr('17.5 ק״ג כל יד',2.5)==='20 ק״ג כל יד');
+  test('adjustWeightStr -2.5 regular', ()=>adjustWeightStr('20 ק״ג כל יד',-2.5)==='17.5 ק״ג כל יד');
+  test('adjustWeightStr graviton harder (+2.5 means -2.5 on number)', ()=>adjustWeightStr('גרביטון: 35 ק״ג עזרה',2.5)==='גרביטון: 32.5 ק״ג עזרה');
+  test('adjustWeightStr min 0', ()=>parseFloat(adjustWeightStr('0 ק״ג',-5))===0);
+  test('defState has all required keys', ()=>{const d=defState();return ['goal','exerciseAdjustments','savedWorkouts','completedWos','allLogs','logs','exerciseAdjustments'].every(k=>k in d);});
+  test('save/load localStorage round-trip', ()=>{
+    const prev=S.goal; S.goal='strength'; save(); S.goal=null; loadState();
+    const ok=S.goal==='strength'; S.goal=prev; return ok;
+  });
+  test('goal targets: hypertrophy hi=3', ()=>{const t={strength:{lo:0,hi:2},hypertrophy:{lo:1,hi:3},fitness:{lo:2,hi:4}};return t.hypertrophy.hi===3;});
+  test('computeAdjustments: high RIR increases weight', ()=>{
+    const prevAdj={...S.exerciseAdjustments}; const prevLogs=[...S.logs];
+    if(!S.wo) return true; // skip if no active workout
+    const ex=S.wo.exercises[0];
+    S.logs=[{exIdx:0,setIdx:0,rir:5,woKey:'test'},{exIdx:0,setIdx:1,rir:5,woKey:'test'}];
+    S.goal='hypertrophy';
+    delete S.exerciseAdjustments[ex.exercise];
+    computeAdjustments();
+    const adj=S.exerciseAdjustments[ex.exercise];
+    S.exerciseAdjustments={...prevAdj}; S.logs=prevLogs;
+    return adj&&adj.direction==='up';
+  });
+
+  const passed=results.filter(r=>r.pass).length;
+  console.log(`\n🧪 QA: ${passed}/${results.length} passed\n`);
+  results.forEach(r=>console.log(`${r.pass?'✅':'❌'} ${r.name}${r.err?' → '+r.err:''}`));
+  showToast(`🧪 QA: ${passed}/${results.length} passed`);
+  return results;
+}
+window.runQA=runQA;
+
 // ─── INIT ─────────────────────────────────────────────────────────────────────
 (async function init(){
-  await pullFromCloud(); // נסה למשוך נתונים עדכניים מהענן לפני הרינדור הראשון
+  await pullFromCloud();
   renderHome();
+  if(!S.goal) setTimeout(()=>openModal('modal-goal'),600);
 })();
 try{if(navigator.wakeLock)navigator.wakeLock.request('screen').catch(()=>{});}catch(e){}
 
