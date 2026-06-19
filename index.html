@@ -1,0 +1,1079 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no"/>
+<meta name="theme-color" content="#0a0a0a"/>
+<meta name="apple-mobile-web-app-capable" content="yes"/>
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
+<meta name="apple-mobile-web-app-title" content="אימון"/>
+<link rel="apple-touch-icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='20' fill='%230a0a0a'/><text y='.9em' font-size='80' x='10'>💪</text></svg>"/>
+<link rel="manifest" href="manifest.json"/>
+<title>אימון – עמית</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;-webkit-font-smoothing:antialiased}
+:root{--bg:#0a0a0a;--bg2:#141414;--bg3:#1c1c1c;--bg4:#242424;--bg5:#2c2c2c;
+--or:#f97316;--or2:#ea580c;--am:#fb923c;--text:#fff;--t2:#d1d5db;--t3:#9ca3af;--t4:#6b7280;
+--green:#22c55e;--red:#ef4444;--bd:#2a2a2a;--r:12px;--rsm:8px;--rlg:16px}
+html,body{height:100%;overflow:hidden}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:var(--bg);color:var(--text);direction:rtl;display:flex;flex-direction:column}
+#app{flex:1;display:flex;flex-direction:column;overflow:hidden;position:relative}
+.screen{display:none;flex-direction:column;flex:1;overflow:hidden}
+.screen.active{display:flex}
+.scroll{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding-bottom:16px}
+.bnav{position:fixed;bottom:0;left:0;right:0;height:62px;background:var(--bg2);border-top:1px solid var(--bd);display:flex;z-index:100;padding-bottom:env(safe-area-inset-bottom)}
+.nb{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;background:none;border:none;color:var(--t4);font-size:10px;cursor:pointer;transition:color .15s;padding:8px 4px}
+.nb.active{color:var(--or)}
+.nb svg{width:20px;height:20px;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.nb.wo-live{color:var(--am)}
+.card{background:var(--bg3);border:1px solid var(--bd);border-radius:var(--r);padding:14px 16px;margin:0 14px 10px}
+.btn{background:var(--or);color:#fff;border:none;border-radius:var(--r);font-size:17px;font-weight:700;padding:16px;width:100%;cursor:pointer;letter-spacing:-.2px;transition:background .1s,transform .1s}
+.btn:active{background:var(--or2);transform:scale(.98)}
+.btn2{background:var(--bg4);color:var(--t2);border:1px solid var(--bd);border-radius:var(--r);font-size:15px;font-weight:500;padding:14px;width:100%;cursor:pointer}
+.btn2:active{background:var(--bg5)}
+.btn-red{background:rgba(239,68,68,.12);color:var(--red);border:1px solid rgba(239,68,68,.3);border-radius:var(--r);font-size:14px;font-weight:600;padding:12px;width:100%;cursor:pointer}
+.btn-red:active{background:rgba(239,68,68,.22)}
+.h-header{padding:20px 14px 8px;display:flex;justify-content:space-between;align-items:flex-start}
+.greeting{font-size:21px;font-weight:800;letter-spacing:-.4px}
+.wbadge{background:var(--or);color:#fff;font-size:12px;font-weight:700;padding:4px 10px;border-radius:20px}
+.wprog{display:flex;gap:6px;padding:0 14px 14px;align-items:center}
+.wdot{height:7px;border-radius:4px;background:var(--bg5);flex:1}
+.wdot.done{background:var(--or)}
+.wdot.cur{background:var(--am)}
+.slbl{font-size:11px;font-weight:700;color:var(--t4);text-transform:uppercase;letter-spacing:.8px;padding:0 14px;margin-bottom:8px;margin-top:4px}
+.coach-box{background:var(--bg3);border:1px solid var(--bd);border-right:3px solid var(--or);border-radius:var(--rsm);padding:12px 14px;margin:0 14px 12px}
+.coach-text{font-size:13px;color:var(--t2);line-height:1.6}
+.wo-hdr{background:var(--bg2);padding:12px 14px 8px;border-bottom:1px solid var(--bd);position:sticky;top:0;z-index:10;flex-shrink:0}
+.wo-title{font-size:16px;font-weight:700;margin-bottom:2px}
+.wo-meta{font-size:12px;color:var(--t3);display:flex;gap:10px;margin-bottom:6px}
+.pbar{height:4px;background:var(--bg5);border-radius:2px}
+.pfill{height:100%;background:var(--or);border-radius:2px;transition:width .4s}
+.aset{background:var(--bg2);border:2px solid var(--or);border-radius:var(--rlg);margin:10px 14px 6px;padding:16px}
+.aset-lbl{font-size:12px;color:var(--t3);margin-bottom:3px}
+.aset-name{font-size:19px;font-weight:800;margin-bottom:14px;line-height:1.2}
+.aset-stats{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:12px}
+.astat{background:var(--bg3);border-radius:var(--rsm);padding:10px 6px;text-align:center}
+.astat-v{font-size:28px;font-weight:800;color:var(--or);line-height:1;letter-spacing:-1px}
+.astat-l{font-size:11px;color:var(--t4);margin-top:2px}
+.coach-tip{font-size:12px;color:var(--or);font-weight:600;margin-bottom:10px;padding:8px 10px;background:rgba(249,115,22,.08);border-radius:var(--rsm)}
+.note-tip{font-size:12px;color:var(--t3);padding:8px 10px;background:var(--bg4);border-radius:var(--rsm);margin-bottom:10px;line-height:1.4}
+.rir-title{font-size:14px;font-weight:600;color:var(--text);margin-bottom:4px}
+.rir-sub{font-size:12px;color:var(--t3);margin-bottom:12px}
+.rir-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:14px}
+.rir-btn{background:var(--bg3);border:1px solid var(--bd);border-radius:var(--rsm);padding:16px 8px;font-size:22px;font-weight:800;color:var(--t2);cursor:pointer;text-align:center;transition:all .1s}
+.rir-btn:active,.rir-btn.sel{background:var(--or);border-color:var(--or);color:#fff}
+.abn-title{font-size:12px;color:var(--t4);margin-bottom:8px;font-weight:500}
+.abn-grid{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:14px}
+.abn-btn{background:var(--bg4);border:1px solid var(--bd);border-radius:var(--rsm);padding:9px 8px;font-size:12px;color:var(--t3);cursor:pointer;text-align:center;transition:all .1s}
+.abn-btn.sel{border-color:var(--red);color:var(--red);background:rgba(239,68,68,.08)}
+.cat-hdr{padding:10px 14px 4px;font-size:10px;font-weight:800;color:var(--or);text-transform:uppercase;letter-spacing:1.2px}
+.ex-card{background:var(--bg3);border:1px solid var(--bd);border-radius:var(--rsm);margin:0 14px 6px;padding:12px 14px;display:flex;justify-content:space-between;align-items:center}
+.ex-card.ac{border-color:var(--or);background:var(--bg4)}
+.ex-card.dn{opacity:.45}
+.ex-name{font-size:14px;font-weight:600;margin-bottom:3px}
+.ex-meta{font-size:11px;color:var(--t3)}
+.sdots{display:flex;gap:4px;margin-top:6px}
+.sd{width:9px;height:9px;border-radius:50%;background:var(--bg5);border:1px solid var(--bd)}
+.sd.done{background:var(--or);border-color:var(--or)}
+.sd.cur{background:transparent;border:2px solid var(--or)}
+.rest-screen{position:fixed;inset:0;background:var(--bg);z-index:200;display:none;flex-direction:column;align-items:center;justify-content:center;gap:20px}
+.rest-screen.active{display:flex}
+.rest-lbl{font-size:13px;color:var(--t3);font-weight:600;letter-spacing:.8px;text-transform:uppercase}
+.rest-time{font-size:96px;font-weight:800;color:var(--or);line-height:1;font-variant-numeric:tabular-nums;letter-spacing:-4px}
+.rest-next{font-size:14px;color:var(--t2);text-align:center;max-width:280px;line-height:1.5;padding:0 20px}
+.rest-acts{display:flex;gap:10px;width:290px}
+.rest-b{flex:1;padding:14px;border-radius:var(--r);border:1px solid var(--bd);background:var(--bg3);color:var(--t2);font-size:15px;font-weight:600;cursor:pointer}
+.rest-skip{background:var(--or);border-color:var(--or);color:#fff}
+.rest-prog{width:240px;height:4px;background:var(--bg4);border-radius:2px;overflow:hidden}
+.rest-pfill{height:100%;background:var(--or);border-radius:2px;transition:width 1s linear}
+.sum-stat{background:var(--bg3);border-radius:var(--rsm);padding:14px;text-align:center}
+.sum-val{font-size:30px;font-weight:800;color:var(--or);letter-spacing:-1px}
+.sum-lbl{font-size:11px;color:var(--t4);margin-top:2px}
+.wk-card{background:var(--bg3);border:1px solid var(--bd);border-radius:var(--r);margin:0 14px 8px;overflow:hidden}
+.wk-card.cur{border-color:var(--or)}
+.wk-hdr{padding:12px 14px;display:flex;justify-content:space-between;align-items:center}
+.wk-title{font-size:15px;font-weight:700}
+.wbg{font-size:11px;padding:3px 9px;border-radius:20px;font-weight:600}
+.ws-done{background:rgba(34,197,94,.12);color:var(--green)}
+.ws-cur{background:rgba(249,115,22,.15);color:var(--or)}
+.ws-future{background:var(--bg5);color:var(--t4)}
+.wo-row{padding:10px 14px;border-top:1px solid var(--bd);display:flex;justify-content:space-between;align-items:center}
+.wo-rname{font-size:13px;font-weight:500}
+.wo-rst{font-size:11px;color:var(--t4)}
+.wo-rst.done{color:var(--green)}
+.w-big{font-size:72px;font-weight:800;color:var(--or);text-align:center;background:none;border:none;width:100%;outline:none;direction:ltr;letter-spacing:-2px}
+.wn-grid{display:grid;grid-template-columns:1fr 1fr;gap:7px}
+.wn-btn{background:var(--bg4);border:1px solid var(--bd);border-radius:var(--rsm);padding:10px;font-size:13px;color:var(--t2);cursor:pointer;text-align:center;transition:all .1s}
+.wn-btn.sel{background:rgba(249,115,22,.12);border-color:var(--or);color:var(--or)}
+.ins-card{background:var(--bg3);border-right:3px solid var(--or);border-radius:var(--rsm);padding:11px 13px;margin:0 14px 7px}
+.ins-t{font-size:13px;font-weight:700;margin-bottom:3px}
+.ins-b{font-size:12px;color:var(--t3);line-height:1.5}
+.esb{font-size:11px;padding:2px 8px;border-radius:20px;font-weight:600}
+.esb-easy{background:rgba(251,146,60,.15);color:var(--am)}
+.esb-ok{background:rgba(34,197,94,.12);color:var(--green)}
+.esb-hard{background:rgba(239,68,68,.12);color:var(--red)}
+.bw{height:5px;background:var(--bg5);border-radius:3px;margin-top:5px;overflow:hidden}
+.bf{height:100%;background:var(--or);border-radius:3px}
+.div{height:1px;background:var(--bd);margin:8px 14px 12px}
+/* toast */
+.toast{position:fixed;bottom:76px;left:50%;transform:translateX(-50%);background:var(--bg4);border:1px solid var(--bd);color:var(--text);font-size:13px;font-weight:600;padding:10px 18px;border-radius:20px;z-index:300;opacity:0;transition:opacity .2s;pointer-events:none;white-space:nowrap}
+.toast.show{opacity:1}
+/* modal overlay */
+.modal-bg{position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:250;display:none;align-items:flex-end;justify-content:center}
+.modal-bg.active{display:flex}
+.modal{background:var(--bg2);border-radius:var(--rlg) var(--rlg) 0 0;padding:20px 16px 32px;width:100%;max-width:480px}
+.modal-title{font-size:17px;font-weight:800;margin-bottom:6px}
+.modal-sub{font-size:13px;color:var(--t3);margin-bottom:18px;line-height:1.5}
+.fade-in{animation:fi .2s ease}
+@keyframes fi{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:translateY(0)}}
+/* sync indicator */
+.sync-dot{width:7px;height:7px;border-radius:50%;display:inline-block;margin-left:5px;transition:background .3s}
+.sync-idle{background:var(--t4)}
+.sync-syncing{background:var(--am);animation:pulse 1s infinite}
+.sync-synced{background:var(--green)}
+.sync-error{background:var(--red)}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
+</style>
+</head>
+<body>
+<div id="app">
+
+<!-- HOME -->
+<div id="s-home" class="screen active">
+  <div class="scroll">
+    <div class="h-header">
+      <div>
+        <div class="greeting" id="h-greet">בוקר טוב, עמית 💪</div>
+        <div style="font-size:12px;color:var(--t3);margin-top:3px" id="h-date"></div>
+      </div>
+      <div class="wbadge" id="h-wbadge">שבוע 1</div>
+    </div>
+    <div style="padding:0 14px 6px;display:flex;align-items:center;justify-content:flex-end">
+      <span style="font-size:11px;color:var(--t4)">סנכרון לענן</span>
+      <span class="sync-dot sync-idle" id="sync-dot"></span>
+    </div>
+    <div class="wprog" id="h-wprog">
+      <div class="wdot"></div><div class="wdot"></div><div class="wdot"></div>
+      <div style="font-size:12px;color:var(--t3);margin-right:4px" id="h-prog-txt">0/3</div>
+    </div>
+    <div style="padding:0 14px 10px">
+      <button class="btn" onclick="startWorkout()" id="h-start-btn">התחל אימון</button>
+    </div>
+    <div style="padding:0 14px 14px">
+      <button class="btn2" onclick="goTab('weight')">הזן משקל בוקר</button>
+    </div>
+    <div class="slbl">האימון הבא</div>
+    <div class="card" id="h-next-card" onclick="startWorkout()" style="cursor:pointer;padding:14px 16px">
+      <div style="font-size:15px;font-weight:700;margin-bottom:7px" id="h-next-name">–</div>
+      <div style="font-size:12px;color:var(--t3);display:flex;gap:12px" id="h-next-meta"></div>
+    </div>
+    <div class="slbl" style="margin-top:4px">אימון קודם</div>
+    <div class="card" id="h-last-card" style="padding:14px 16px">
+      <div style="font-size:13px;color:var(--t3)">טרם בוצע אימון</div>
+    </div>
+    <div class="slbl" style="margin-top:4px">הערת מאמן</div>
+    <div class="coach-box"><div class="coach-text" id="h-coach"></div></div>
+    <div style="height:70px"></div>
+  </div>
+</div>
+
+<!-- WORKOUT -->
+<div id="s-workout" class="screen">
+  <div class="wo-hdr">
+    <div style="display:flex;justify-content:space-between;align-items:center">
+      <div class="wo-title" id="wo-title">–</div>
+      <div style="font-size:12px;color:var(--or);font-weight:600" id="wo-timer">00:00</div>
+    </div>
+    <div class="wo-meta">
+      <span id="wo-sets-lbl">0 סטים</span>
+      <span id="wo-ex-lbl">תרגיל 1/6</span>
+      <span id="wo-week-lbl">שבוע 1</span>
+    </div>
+    <div class="pbar"><div class="pfill" id="wo-pfill" style="width:0%"></div></div>
+  </div>
+  <div class="scroll" id="wo-scroll"></div>
+</div>
+
+<!-- REST FULLSCREEN -->
+<div class="rest-screen" id="rest-scr">
+  <div class="rest-lbl">מנוחה</div>
+  <div class="rest-time" id="rest-cd">1:30</div>
+  <div class="rest-prog"><div class="rest-pfill" id="rest-pf" style="width:100%"></div></div>
+  <div class="rest-next" id="rest-next"></div>
+  <div class="rest-acts">
+    <button class="rest-b" onclick="addRest()">+30 שנ׳</button>
+    <button class="rest-b rest-skip" onclick="skipRest()">דלג ←</button>
+  </div>
+  <div style="font-size:12px;color:var(--t4)">סטים בוצעו: <span id="rest-sdone" style="color:var(--t2);font-weight:700">0</span></div>
+</div>
+
+<!-- SUMMARY -->
+<div id="s-summary" class="screen">
+  <div class="scroll">
+    <div style="padding:24px 14px 14px;text-align:center">
+      <div style="font-size:44px;margin-bottom:8px">🏆</div>
+      <div style="font-size:22px;font-weight:800">אימון הושלם!</div>
+      <div style="font-size:13px;color:var(--t3);margin-top:4px" id="sum-date">–</div>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;padding:0 14px;margin-bottom:14px">
+      <div class="sum-stat"><div class="sum-val" id="s-sets">–</div><div class="sum-lbl">סטים</div></div>
+      <div class="sum-stat"><div class="sum-val" id="s-rir">–</div><div class="sum-lbl">RIR ממוצע</div></div>
+      <div class="sum-stat"><div class="sum-val" id="s-dur">–</div><div class="sum-lbl">דקות</div></div>
+      <div class="sum-stat"><div class="sum-val" id="s-exs">–</div><div class="sum-lbl">תרגילים</div></div>
+    </div>
+    <div class="slbl">הערת מאמן</div>
+    <div class="coach-box" style="margin-bottom:12px"><div class="coach-text" id="s-coach">–</div></div>
+    <div id="s-flags" style="padding:0 14px;margin-bottom:14px"></div>
+    <div style="padding:0 14px"><button class="btn" onclick="finishSum()">חזרה לבית</button></div>
+    <div style="height:70px"></div>
+  </div>
+</div>
+
+<!-- PROGRAM -->
+<div id="s-program" class="screen">
+  <div style="padding:18px 14px 8px;display:flex;justify-content:space-between;align-items:center">
+    <div style="font-size:19px;font-weight:800">תכנית 12 שבועות</div>
+    <div style="display:flex;align-items:center;gap:6px">
+      <button onclick="changeWeek(-1)" style="background:var(--bg4);border:1px solid var(--bd);border-radius:var(--rsm);width:32px;height:32px;color:var(--t2);font-size:18px;cursor:pointer;display:flex;align-items:center;justify-content:center">‹</button>
+      <div style="font-size:13px;font-weight:700;color:var(--or);min-width:52px;text-align:center" id="prog-week-lbl">שבוע 1</div>
+      <button onclick="changeWeek(1)" style="background:var(--bg4);border:1px solid var(--bd);border-radius:var(--rsm);width:32px;height:32px;color:var(--t2);font-size:18px;cursor:pointer;display:flex;align-items:center;justify-content:center">›</button>
+    </div>
+  </div>
+  <div style="padding:0 14px 12px;font-size:12px;color:var(--t3)">Push / Pull / Legs · לחץ על אימון לאפשרויות</div>
+  <div class="scroll" id="prog-list"></div>
+</div>
+
+<!-- MODAL: אפשרויות אימון -->
+<div class="modal-bg" id="modal-wo-opts" onclick="closeModal('modal-wo-opts')">
+  <div class="modal" onclick="event.stopPropagation()">
+    <div class="modal-title" id="modal-wo-title">אימון א׳</div>
+    <div class="modal-sub" id="modal-wo-sub">שבוע 2</div>
+    <div style="display:flex;flex-direction:column;gap:10px;margin-top:4px">
+      <button class="btn" id="modal-wo-start-btn" onclick="startWorkoutFromModal()">התחל אימון זה</button>
+      <button class="btn-red" id="modal-wo-reset-btn" onclick="resetWorkoutFromModal()">אפס אימון זה</button>
+      <button class="btn2" onclick="closeModal('modal-wo-opts')">ביטול</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL: אפס שבוע שלם -->
+<div class="modal-bg" id="modal-week-reset" onclick="closeModal('modal-week-reset')">
+  <div class="modal" onclick="event.stopPropagation()">
+    <div class="modal-title" id="modal-wr-title">אפס שבוע 2?</div>
+    <div class="modal-sub">כל האימונים בשבוע זה יאופסו וחזרו לסטטוס "טרם התחיל". הנתונים שנשמרו ב-RIR יישארו בהיסטוריה.</div>
+    <div style="display:flex;flex-direction:column;gap:10px;margin-top:4px">
+      <button class="btn-red" onclick="confirmResetWeek()">כן, אפס שבוע</button>
+      <button class="btn2" onclick="closeModal('modal-week-reset')">ביטול</button>
+    </div>
+  </div>
+</div>
+
+<!-- WEIGHT -->
+<div id="s-weight" class="screen">
+  <div style="padding:18px 14px 6px;font-size:19px;font-weight:800">משקל בוקר</div>
+  <div class="scroll">
+    <div class="card" style="text-align:center;margin-bottom:8px;padding:16px">
+      <div style="display:flex;align-items:baseline;justify-content:center;gap:4px">
+        <input class="w-big" type="number" id="w-input" placeholder="88.0" step="0.1" min="50" max="200"/>
+        <span style="font-size:20px;color:var(--t3);font-weight:600">ק״ג</span>
+      </div>
+      <div style="font-size:12px;color:var(--t4);margin-top:4px" id="w-today-lbl">לא הוזן היום</div>
+    </div>
+    <div style="padding:0 14px 12px">
+      <div style="font-size:12px;color:var(--t3);margin-bottom:8px;font-weight:600">הערה (אופציונלי)</div>
+      <div class="wn-grid">
+        <button class="wn-btn" onclick="togWN(this,'צ׳יט')">צ׳יט</button>
+        <button class="wn-btn" onclick="togWN(this,'שינה לא טובה')">שינה לא טובה</button>
+        <button class="wn-btn" onclick="togWN(this,'נסיעה')">נסיעה</button>
+        <button class="wn-btn" onclick="togWN(this,'מילואים')">מילואים</button>
+        <button class="wn-btn" onclick="togWN(this,'מחלה')">מחלה</button>
+        <button class="wn-btn" onclick="togWN(this,'אימון קשה')">אימון קשה</button>
+      </div>
+    </div>
+    <div style="padding:0 14px"><button class="btn" onclick="saveWeight()">שמור משקל</button></div>
+    <div class="div"></div>
+    <div class="slbl">מגמה</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:7px;padding:0 14px;margin-bottom:14px">
+      <div class="sum-stat"><div class="sum-val" style="font-size:20px" id="wt-now">–</div><div class="sum-lbl">היום</div></div>
+      <div class="sum-stat"><div class="sum-val" style="font-size:20px" id="wt-avg">88.0</div><div class="sum-lbl">ממוצע 7י׳</div></div>
+      <div class="sum-stat"><div class="sum-val" style="font-size:20px;color:var(--green)" id="wt-chg">0.0</div><div class="sum-lbl">שינוי</div></div>
+    </div>
+    <div style="padding:0 14px 8px;font-size:12px;color:var(--t3);font-weight:600">7 ימים אחרונים</div>
+    <div style="padding:0 14px"><canvas id="wt-chart" style="width:100%;height:80px"></canvas></div>
+    <div style="height:70px"></div>
+  </div>
+</div>
+
+<!-- PROGRESS -->
+<div id="s-progress" class="screen">
+  <div style="padding:18px 14px 6px;font-size:19px;font-weight:800">התקדמות</div>
+  <div class="scroll" id="prog-content">
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:7px;padding:0 14px 14px">
+      <div class="sum-stat"><div class="sum-val" id="pr-done">0/0</div><div class="sum-lbl">אימונים</div></div>
+      <div class="sum-stat"><div class="sum-val" id="pr-pct" style="color:var(--green)">0%</div><div class="sum-lbl">עמידה</div></div>
+    </div>
+    <div class="slbl">תובנות מאמן</div>
+    <div id="pr-insights"></div>
+    <div class="div"></div>
+    <div class="slbl">סטטוס תרגילים</div>
+    <div id="pr-exlist" style="padding:0 14px"></div>
+    <div style="height:70px"></div>
+  </div>
+</div>
+
+</div>
+
+<!-- BOTTOM NAV -->
+<nav class="bnav">
+  <button class="nb active" onclick="goTab('home')" id="nb-home">
+    <svg viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>בית
+  </button>
+  <button class="nb" onclick="goTab('workout')" id="nb-workout">
+    <svg viewBox="0 0 24 24"><path d="M18 8h1a4 4 0 010 8h-1M2 8h16v9a4 4 0 01-4 4H6a4 4 0 01-4-4V8zM6 1v3M10 1v3M14 1v3"/></svg>אימון
+  </button>
+  <button class="nb" onclick="goTab('program')" id="nb-program">
+    <svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>תכנית
+  </button>
+  <button class="nb" onclick="goTab('weight')" id="nb-weight">
+    <svg viewBox="0 0 24 24"><path d="M12 2a5 5 0 015 5v1h2a1 1 0 011 1v11a1 1 0 01-1 1H5a1 1 0 01-1-1V9a1 1 0 011-1h2V7a5 5 0 015-5z"/></svg>משקל
+  </button>
+  <button class="nb" onclick="goTab('progress')" id="nb-progress">
+    <svg viewBox="0 0 24 24"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>התקדמות
+  </button>
+</nav>
+
+<!-- TOAST -->
+<div class="toast" id="toast"></div>
+
+<!-- MODAL: סיים אימון -->
+<div class="modal-bg" id="modal-end" onclick="closeModal('modal-end')">
+  <div class="modal" onclick="event.stopPropagation()">
+    <div class="modal-title">סיים אימון עכשיו?</div>
+    <div class="modal-sub" id="modal-end-sub">בוצעו X סטים מתוך Y. האימון יישמר כחלקי.</div>
+    <div style="display:flex;flex-direction:column;gap:10px;margin-top:4px">
+      <button class="btn" onclick="confirmEndWorkout()">כן, סיים וצפה בסיכום</button>
+      <button class="btn2" onclick="closeModal('modal-end')">המשך אימון</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL: undo סט -->
+<div class="modal-bg" id="modal-undo" onclick="closeModal('modal-undo')">
+  <div class="modal" onclick="event.stopPropagation()">
+    <div class="modal-title">בטל סט אחרון?</div>
+    <div class="modal-sub" id="modal-undo-sub">הסט האחרון שנשמר יימחק והנתונים יאופסו.</div>
+    <div style="display:flex;flex-direction:column;gap:10px;margin-top:4px">
+      <button class="btn-red" onclick="confirmUndo()">בטל סט אחרון</button>
+      <button class="btn2" onclick="closeModal('modal-undo')">השאר כמו שזה</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const PLAN = {"weeks":[{"week":1,"workouts":[{"workout":1,"focus":"Push + ליבה","exercises":[{"muscle":"חזה ניטרלי","exercise":"לחיצת חזה משקולות על ספסל שטוח","target_weight":"17.5 ק״ג כל יד","sets":3,"target_reps":10,"rest":"75–90 שנ׳"},{"muscle":"חזה עליון","exercise":"בנץ׳ חופשי בשיפוע חיובי","target_weight":"42.5 ק״ג","sets":3,"target_reps":10,"rest":"75–90 שנ׳"},{"muscle":"כתף אמצעית","exercise":"לחיצת כתפיים בישיבה עם משקולות","target_weight":"12.5 ק״ג כל יד","sets":3,"target_reps":10,"rest":"75–90 שנ׳"},{"muscle":"כתף אמצעית","exercise":"הרחקת כתף בעמידה","target_weight":"7.5 ק״ג כל יד","sets":3,"target_reps":12,"rest":"45–60 שנ׳"},{"muscle":"יד אחורית","exercise":"ריסוק גולגולות עם מוט","target_weight":"15 ק״ג","sets":3,"target_reps":12,"rest":"45–60 שנ׳"},{"muscle":"ליבה + דופק","exercise":"Kettlebell Swing","target_weight":"16 ק״ג","sets":3,"target_reps":12,"rest":"45–60 שנ׳"}]},{"workout":2,"focus":"Pull + מתח + Kettlebell","exercises":[{"muscle":"גב משיכה","exercise":"מתח בגרביטון","target_weight":"גרביטון: 35 ק״ג עזרה","sets":3,"target_reps":10,"rest":"75–90 שנ׳"},{"muscle":"גב משיכה","exercise":"משיכת פולי עליון מוט H","target_weight":"42.5 ק״ג","sets":3,"target_reps":10,"rest":"75–90 שנ׳"},{"muscle":"גב חתירה","exercise":"חתירת T-Bar אחיזה צרה","target_weight":"20 ק״ג","sets":3,"target_reps":10,"rest":"75–90 שנ׳"},{"muscle":"כתף אחורית","exercise":"פרפר הפוך במכונה","target_weight":"7.5 ק״ג","sets":3,"target_reps":12,"rest":"45–60 שנ׳"},{"muscle":"יד קדמית","exercise":"כפיפת מרפקים משקולות יד-יד","target_weight":"7.5 ק״ג כל יד","sets":3,"target_reps":12,"rest":"45–60 שנ׳"},{"muscle":"גב + דופק","exercise":"Kettlebell Clean + Press","target_weight":"8 ק״ג כל יד","sets":3,"target_reps":12,"rest":"45–60 שנ׳"}]},{"workout":3,"focus":"Legs + Full Body","exercises":[{"muscle":"רגליים קדמי","exercise":"סקוואט אחורי כנגד מוט","target_weight":"42.5 ק״ג","sets":3,"target_reps":10,"rest":"75–90 שנ׳"},{"muscle":"רגליים אחורי","exercise":"דדליפט רומני כנגד מוט","target_weight":"40 ק״ג","sets":3,"target_reps":10,"rest":"75–90 שנ׳"},{"muscle":"רגליים אחורי","exercise":"כפיפת ברך במכונה","target_weight":"20 ק״ג","sets":3,"target_reps":12,"rest":"45–60 שנ׳"},{"muscle":"רגליים קדמי","exercise":"פשיטת ברך במכונה","target_weight":"30 ק״ג","sets":3,"target_reps":12,"rest":"45–60 שנ׳"},{"muscle":"ישבן","exercise":"היפ תרסט במכונה","target_weight":"12.5 ק״ג","sets":3,"target_reps":10,"rest":"75–90 שנ׳"},{"muscle":"רגליים + דופק","exercise":"Kettlebell Goblet Squat","target_weight":"16 ק״ג","sets":3,"target_reps":12,"rest":"45–60 שנ׳"}]}]},{"week":2,"workouts":[{"workout":1,"focus":"Push + ליבה","exercises":[{"muscle":"חזה ניטרלי","exercise":"לחיצת חזה משקולות על ספסל שטוח","target_weight":"20 ק״ג כל יד","sets":3,"target_reps":10,"rest":"75–90 שנ׳"},{"muscle":"חזה עליון","exercise":"בנץ׳ חופשי בשיפוע חיובי","target_weight":"40 ק״ג","sets":3,"target_reps":10,"rest":"75–90 שנ׳"},{"muscle":"כתף אמצעית","exercise":"לחיצת כתפיים בישיבה עם משקולות","target_weight":"15 ק״ג כל יד","sets":3,"target_reps":8,"rest":"75–90 שנ׳"},{"muscle":"כתף אמצעית","exercise":"הרחקת כתף בעמידה","target_weight":"7.5 ק״ג כל יד","sets":3,"target_reps":14,"rest":"45–60 שנ׳"},{"muscle":"יד אחורית","exercise":"ריסוק גולגולות עם מוט","target_weight":"15 ק״ג","sets":3,"target_reps":12,"rest":"45–60 שנ׳"},{"muscle":"ליבה + דופק","exercise":"Kettlebell Swing","target_weight":"16 ק״ג","sets":3,"target_reps":14,"rest":"45–60 שנ׳"}]},{"workout":2,"focus":"Pull + מתח + Kettlebell","exercises":[{"muscle":"גב משיכה","exercise":"מתח בגרביטון","target_weight":"גרביטון: 35 ק״ג עזרה","sets":3,"target_reps":10,"rest":"75–90 שנ׳"},{"muscle":"גב משיכה","exercise":"משיכת פולי עליון מוט H","target_weight":"45 ק״ג","sets":3,"target_reps":10,"rest":"75–90 שנ׳"},{"muscle":"גב חתירה","exercise":"חתירת T-Bar אחיזה צרה","target_weight":"20 ק״ג","sets":3,"target_reps":10,"rest":"75–90 שנ׳"},{"muscle":"כתף אחורית","exercise":"פרפר הפוך במכונה","target_weight":"12 ק״ג","sets":3,"target_reps":14,"rest":"45–60 שנ׳"},{"muscle":"יד קדמית","exercise":"כפיפת מרפקים משקולות יד-יד","target_weight":"7.5 ק״ג כל יד","sets":3,"target_reps":12,"rest":"45–60 שנ׳"},{"muscle":"גב + דופק","exercise":"Kettlebell Clean + Press","target_weight":"8 ק״ג כל יד","sets":3,"target_reps":14,"rest":"45–60 שנ׳"}]},{"workout":3,"focus":"Legs + Full Body","exercises":[{"muscle":"רגליים קדמי","exercise":"סקוואט אחורי כנגד מוט","target_weight":"42.5 ק״ג","sets":3,"target_reps":10,"rest":"75–90 שנ׳"},{"muscle":"רגליים אחורי","exercise":"דדליפט רומני כנגד מוט","target_weight":"40 ק״ג","sets":3,"target_reps":10,"rest":"75–90 שנ׳"},{"muscle":"רגליים אחורי","exercise":"כפיפת ברך במכונה","target_weight":"20 ק״ג","sets":3,"target_reps":12,"rest":"45–60 שנ׳"},{"muscle":"רגליים קדמי","exercise":"פשיטת ברך במכונה","target_weight":"30 ק״ג","sets":3,"target_reps":12,"rest":"45–60 שנ׳"},{"muscle":"ישבן","exercise":"היפ תרסט במכונה","target_weight":"12.5 ק״ג","sets":3,"target_reps":10,"rest":"75–90 שנ׳"},{"muscle":"רגליים + דופק","exercise":"Kettlebell Goblet Squat","target_weight":"16 ק״ג","sets":3,"target_reps":12,"rest":"45–60 שנ׳"}]}]},{"week":3,"workouts":[{"workout":1,"focus":"Push + ליבה","exercises":[{"muscle":"חזה ניטרלי","exercise":"לחיצת חזה משקולות על ספסל שטוח","target_weight":"20 ק״ג כל יד","sets":3,"target_reps":10,"rest":"75–90 שנ׳"},{"muscle":"חזה עליון","exercise":"בנץ׳ חופשי בשיפוע חיובי","target_weight":"42.5 ק״ג","sets":3,"target_reps":10,"rest":"75–90 שנ׳"},{"muscle":"כתף אמצעית","exercise":"לחיצת כתפיים בישיבה עם משקולות","target_weight":"15 ק״ג כל יד","sets":3,"target_reps":8,"rest":"75–90 שנ׳"},{"muscle":"כתף אמצעית","exercise":"הרחקת כתף בעמידה","target_weight":"7.5 ק״ג כל יד","sets":3,"target_reps":14,"rest":"45–60 שנ׳"},{"muscle":"יד אחורית","exercise":"ריסוק גולגולות עם מוט","target_weight":"17.5 ק״ג","sets":3,"target_reps":12,"rest":"45–60 שנ׳"},{"muscle":"ליבה + דופק","exercise":"Kettlebell Swing","target_weight":"16 ק״ג","sets":3,"target_reps":15,"rest":"45–60 שנ׳"}]},{"workout":2,"focus":"Pull + מתח + Kettlebell","exercises":[{"muscle":"גב משיכה","exercise":"מתח בגרביטון","target_weight":"גרביטון: 35 ק״ג עזרה","sets":3,"target_reps":8,"rest":"75–90 שנ׳"},{"muscle":"גב משיכה","exercise":"משיכת פולי עליון מוט H","target_weight":"45 ק״ג","sets":3,"target_reps":10,"rest":"75–90 שנ׳"},{"muscle":"גב חתירה","exercise":"חתירת T-Bar אחיזה צרה","target_weight":"20 ק״ג","sets":3,"target_reps":10,"rest":"75–90 שנ׳"},{"muscle":"כתף אחורית","exercise":"פרפר הפוך במכונה","target_weight":"12 ק״ג","sets":3,"target_reps":14,"rest":"45–60 שנ׳"},{"muscle":"יד קדמית","exercise":"כפיפת מרפקים משקולות יד-יד","target_weight":"7.5 ק״ג כל יד","sets":3,"target_reps":12,"rest":"45–60 שנ׳"},{"muscle":"גב + דופק","exercise":"Kettlebell Clean + Press","target_weight":"8 ק״ג כל יד","sets":3,"target_reps":15,"rest":"45–60 שנ׳"}]},{"workout":3,"focus":"Legs + Full Body","exercises":[{"muscle":"רגליים קדמי","exercise":"סקוואט אחורי כנגד מוט","target_weight":"45 ק״ג","sets":3,"target_reps":10,"rest":"75–90 שנ׳"},{"muscle":"רגליים אחורי","exercise":"דדליפט רומני כנגד מוט","target_weight":"42.5 ק״ג","sets":3,"target_reps":10,"rest":"75–90 שנ׳"},{"muscle":"רגליים אחורי","exercise":"כפיפת ברך במכונה","target_weight":"20 ק״ג","sets":3,"target_reps":12,"rest":"45–60 שנ׳"},{"muscle":"רגליים קדמי","exercise":"פשיטת ברך במכונה","target_weight":"32.5 ק״ג","sets":3,"target_reps":12,"rest":"45–60 שנ׳"},{"muscle":"ישבן","exercise":"היפ תרסט במכונה","target_weight":"15 ק״ג","sets":3,"target_reps":10,"rest":"75–90 שנ׳"},{"muscle":"רגליים + דופק","exercise":"Kettlebell Goblet Squat","target_weight":"16 ק״ג","sets":3,"target_reps":14,"rest":"45–60 שנ׳"}]}]},{"week":4,"workouts":[{"workout":1,"focus":"Push + ליבה","exercises":[{"muscle":"חזה ניטרלי","exercise":"לחיצת חזה משקולות על ספסל שטוח","target_weight":"20 ק״ג כל יד","sets":3,"target_reps":8,"rest":"75–90 שנ׳"},{"muscle":"חזה עליון","exercise":"בנץ׳ חופשי בשיפוע חיובי","target_weight":"45 ק״ג","sets":3,"target_reps":8,"rest":"75–90 שנ׳"},{"muscle":"כתף אמצעית","exercise":"לחיצת כתפיים בישיבה עם משקולות","target_weight":"15 ק״ג כל יד","sets":3,"target_reps":8,"rest":"75–90 שנ׳"},{"muscle":"כתף אמצעית","exercise":"הרחקת כתף בעמידה","target_weight":"7.5 ק״ג כל יד","sets":3,"target_reps":12,"rest":"45–60 שנ׳"},{"muscle":"יד אחורית","exercise":"ריסוק גולגולות עם מוט","target_weight":"17.5 ק״ג","sets":3,"target_reps":12,"rest":"45–60 שנ׳"},{"muscle":"ליבה + דופק","exercise":"Kettlebell Swing","target_weight":"16 ק״ג","sets":3,"target_reps":16,"rest":"45–60 שנ׳"}]},{"workout":2,"focus":"Pull + מתח + Kettlebell","exercises":[{"muscle":"גב משיכה","exercise":"מתח בגרביטון","target_weight":"גרביטון: 32.5 ק״ג עזרה","sets":3,"target_reps":8,"rest":"75–90 שנ׳"},{"muscle":"גב משיכה","exercise":"משיכת פולי עליון מוט H","target_weight":"50 ק״ג","sets":3,"target_reps":8,"rest":"75–90 שנ׳"},{"muscle":"גב חתירה","exercise":"חתירת T-Bar אחיזה צרה","target_weight":"22.5 ק״ג","sets":3,"target_reps":8,"rest":"75–90 שנ׳"},{"muscle":"כתף אחורית","exercise":"פרפר הפוך במכונה","target_weight":"12 ק״ג","sets":3,"target_reps":12,"rest":"45–60 שנ׳"},{"muscle":"יד קדמית","exercise":"כפיפת מרפקים משקולות יד-יד","target_weight":"10 ק״ג כל יד","sets":3,"target_reps":8,"rest":"45–60 שנ׳"},{"muscle":"גב + דופק","exercise":"Kettlebell Clean + Press","target_weight":"10 ק״ג כל יד","sets":3,"target_reps":12,"rest":"45–60 שנ׳"}]},{"workout":3,"focus":"Legs + Full Body","exercises":[{"muscle":"רגליים קדמי","exercise":"סקוואט אחורי כנגד מוט","target_weight":"50 ק״ג","sets":3,"target_reps":8,"rest":"75–90 שנ׳"},{"muscle":"רגליים אחורי","exercise":"דדליפט רומני כנגד מוט","target_weight":"45 ק״ג","sets":3,"target_reps":8,"rest":"75–90 שנ׳"},{"muscle":"רגליים אחורי","exercise":"כפיפת ברך במכונה","target_weight":"22.5 ק״ג","sets":3,"target_reps":12,"rest":"45–60 שנ׳"},{"muscle":"רגליים קדמי","exercise":"פשיטת ברך במכונה","target_weight":"35 ק״ג","sets":3,"target_reps":12,"rest":"45–60 שנ׳"},{"muscle":"ישבן","exercise":"היפ תרסט במכונה","target_weight":"15 ק״ג","sets":3,"target_reps":8,"rest":"75–90 שנ׳"},{"muscle":"רגליים + דופק","exercise":"Kettlebell Goblet Squat","target_weight":"16 ק״ג","sets":3,"target_reps":15,"rest":"45–60 שנ׳"}]}]},{"week":5,"workouts":[{"workout":1,"focus":"Push + ליבה","exercises":[{"muscle":"חזה ניטרלי","exercise":"לחיצת חזה משקולות על ספסל שטוח","target_weight":"22.5 ק״ג כל יד","sets":3,"target_reps":8,"rest":"75–90 שנ׳"},{"muscle":"חזה עליון","exercise":"בנץ׳ חופשי בשיפוע חיובי","target_weight":"47.5 ק״ג","sets":3,"target_reps":8,"rest":"75–90 שנ׳"},{"muscle":"כתף אמצעית","exercise":"לחיצת כתפיים בישיבה עם משקולות","target_weight":"17.5 ק״ג כל יד","sets":3,"target_reps":8,"rest":"75–90 שנ׳"},{"muscle":"כתף אמצעית","exercise":"הרחקת כתף בעמידה","target_weight":"10 ק״ג כל יד","sets":3,"target_reps":10,"rest":"45–60 שנ׳"},{"muscle":"יד אחורית","exercise":"ריסוק גולגולות עם מוט","target_weight":"20 ק״ג","sets":3,"target_reps":10,"rest":"45–60 שנ׳"},{"muscle":"ליבה + דופק","exercise":"Kettlebell Swing","target_weight":"20 ק״ג","sets":3,"target_reps":14,"rest":"45–60 שנ׳"}]},{"workout":2,"focus":"Pull + מתח + Kettlebell","exercises":[{"muscle":"גב משיכה","exercise":"מתח בגרביטון","target_weight":"גרביטון: 32.5 ק״ג עזרה","sets":3,"target_reps":8,"rest":"75–90 שנ׳"},{"muscle":"גב משיכה","exercise":"משיכת פולי עליון מוט H","target_weight":"50 ק״ג","sets":3,"target_reps":8,"rest":"75–90 שנ׳"},{"muscle":"גב חתירה","exercise":"חתירת T-Bar אחיזה צרה","target_weight":"22.5 ק״ג","sets":3,"target_reps":8,"rest":"75–90 שנ׳"},{"muscle":"כתף אחורית","exercise":"פרפר הפוך במכונה","target_weight":"19 ק״ג","sets":3,"target_reps":10,"rest":"45–60 שנ׳"},{"muscle":"יד קדמית","exercise":"כפיפת מרפקים משקולות יד-יד","target_weight":"10 ק״ג כל יד","sets":3,"target_reps":10,"rest":"45–60 שנ׳"},{"muscle":"גב + דופק","exercise":"Kettlebell Clean + Press","target_weight":"10 ק״ג כל יד","sets":3,"target_reps":14,"rest":"45–60 שנ׳"}]},{"workout":3,"focus":"Legs + Full Body","exercises":[{"muscle":"רגליים קדמי","exercise":"סקוואט אחורי כנגד מוט","target_weight":"52.5 ק״ג","sets":3,"target_reps":8,"rest":"75–90 שנ׳"},{"muscle":"רגליים אחורי","exercise":"דדליפט רומני כנגד מוט","target_weight":"47.5 ק״ג","sets":3,"target_reps":8,"rest":"75–90 שנ׳"},{"muscle":"רגליים אחורי","exercise":"כפיפת ברך במכונה","target_weight":"25 ק״ג","sets":3,"target_reps":10,"rest":"45–60 שנ׳"},{"muscle":"רגליים קדמי","exercise":"פשיטת ברך במכונה","target_weight":"35 ק״ג","sets":3,"target_reps":10,"rest":"45–60 שנ׳"},{"muscle":"ישבן","exercise":"היפ תרסט במכונה","target_weight":"15 ק״ג","sets":3,"target_reps":8,"rest":"75–90 שנ׳"},{"muscle":"רגליים + דופק","exercise":"Kettlebell Goblet Squat","target_weight":"16 ק״ג","sets":3,"target_reps":16,"rest":"45–60 שנ׳"}]}]},{"week":6,"workouts":[{"workout":1,"focus":"Push + ליבה","exercises":[{"muscle":"חזה ניטרלי","exercise":"לחיצת חזה משקולות על ספסל שטוח","target_weight":"17.5 ק״ג כל יד","sets":3,"target_reps":10,"rest":"75–90 שנ׳"},{"muscle":"חזה עליון","exercise":"בנץ׳ חופשי בשיפוע חיובי","target_weight":"40 ק״ג","sets":3,"target_reps":8,"rest":"75–90 שנ׳"},{"muscle":"כתף אמצעית","exercise":"לחיצת כתפיים בישיבה עם משקולות","target_weight":"12.5 ק״ג כל יד","sets":3,"target_reps":8,"rest":"75–90 שנ׳"},{"muscle":"כתף אמצעית","exercise":"הרחקת כתף בעמידה","target_weight":"7.5 ק״ג כל יד","sets":3,"target_reps":12,"rest":"45–60 שנ׳"},{"muscle":"יד אחורית","exercise":"ריסוק גולגולות עם מוט","target_weight":"15 ק״ג","sets":3,"target_reps":12,"rest":"45–60 שנ׳"},{"muscle":"ליבה + דופק","exercise":"Kettlebell Swing","target_weight":"16 ק״ג","sets":3,"target_reps":12,"rest":"45–60 שנ׳"}]},{"workout":2,"focus":"Pull + מתח + Kettlebell","exercises":[{"muscle":"גב משיכה","exercise":"מתח בגרביטון","target_weight":"גרביטון: 35 ק״ג עזרה","sets":3,"target_reps":8,"rest":"75–90 שנ׳"},{"muscle":"גב משיכה","exercise":"משיכת פולי עליון מוט H","target_weight":"40 ק״ג","sets":3,"target_reps":8,"rest":"75–90 שנ׳"},{"muscle":"גב חתירה","exercise":"חתירת T-Bar אחיזה צרה","target_weight":"20 ק״ג","sets":3,"target_reps":8,"rest":"75–90 שנ׳"},{"muscle":"כתף אחורית","exercise":"פרפר הפוך במכונה","target_weight":"12 ק״ג","sets":3,"target_reps":12,"rest":"45–60 שנ׳"},{"muscle":"יד קדמית","exercise":"כפיפת מרפקים משקולות יד-יד","target_weight":"7.5 ק״ג כל יד","sets":3,"target_reps":12,"rest":"45–60 שנ׳"},{"muscle":"גב + דופק","exercise":"Kettlebell Clean + Press","target_weight":"8 ק״ג כל יד","sets":3,"target_reps":12,"rest":"45–60 שנ׳"}]},{"workout":3,"focus":"Legs + Full Body","exercises":[{"muscle":"רגליים קדמי","exercise":"סקוואט אחורי כנגד מוט","target_weight":"42.5 ק״ג","sets":3,"target_reps":8,"rest":"75–90 שנ׳"},{"muscle":"רגליים אחורי","exercise":"דדליפט רומני כנגד מוט","target_weight":"40 ק״ג","sets":3,"target_reps":8,"rest":"75–90 שנ׳"},{"muscle":"רגליים אחורי","exercise":"כפיפת ברך במכונה","target_weight":"20 ק״ג","sets":3,"target_reps":12,"rest":"45–60 שנ׳"},{"muscle":"רגליים קדמי","exercise":"פשיטת ברך במכונה","target_weight":"30 ק״ג","sets":3,"target_reps":12,"rest":"45–60 שנ׳"},{"muscle":"ישבן","exercise":"היפ תרסט במכונה","target_weight":"12.5 ק״ג","sets":3,"target_reps":8,"rest":"75–90 שנ׳"},{"muscle":"רגליים + דופק","exercise":"Kettlebell Goblet Squat","target_weight":"16 ק״ג","sets":3,"target_reps":12,"rest":"45–60 שנ׳"}]}]},{"week":7,"workouts":[{"workout":1,"focus":"Push + ליבה","exercises":[{"muscle":"חזה ניטרלי","exercise":"לחיצת חזה משקולות על ספסל שטוח","target_weight":"22.5 ק״ג כל יד","sets":3,"target_reps":8,"rest":"75–90 שנ׳"},{"muscle":"חזה עליון","exercise":"בנץ׳ חופשי בשיפוע חיובי","target_weight":"50 ק״ג","sets":3,"target_reps":8,"rest":"75–90 שנ׳"},{"muscle":"כתף אמצעית","exercise":"לחיצת כתפיים בישיבה עם משקולות","target_weight":"17.5 ק״ג כל יד","sets":3,"target_reps":8,"rest":"75–90 שנ׳"},{"muscle":"כתף אמצעית","exercise":"הרחקת כתף בעמידה","target_weight":"10 ק״ג כל יד","sets":3,"target_reps":10,"rest":"45–60 שנ׳"},{"muscle":"יד אחורית","exercise":"ריסוק גולגולות עם מוט","target_weight":"20 ק״ג","sets":3,"target_reps":10,"rest":"45–60 שנ׳"},{"muscle":"ליבה + דופק","exercise":"Kettlebell Swing","target_weight":"20 ק״ג","sets":3,"target_reps":16,"rest":"45–60 שנ׳"}]},{"workout":2,"focus":"Pull + מתח + Kettlebell","exercises":[{"muscle":"גב משיכה","exercise":"מתח בגרביטון","target_weight":"גרביטון: 30 ק״ג עזרה","sets":3,"target_reps":8,"rest":"75–90 שנ׳"},{"muscle":"גב משיכה","exercise":"משיכת פולי עליון מוט H","target_weight":"55 ק״ג","sets":3,"target_reps":8,"rest":"75–90 שנ׳"},{"muscle":"גב חתירה","exercise":"חתירת T-Bar אחיזה צרה","target_weight":"25 ק״ג","sets":3,"target_reps":8,"rest":"75–90 שנ׳"},{"muscle":"כתף אחורית","exercise":"פרפר הפוך במכונה","target_weight":"19 ק״ג","sets":3,"target_reps":10,"rest":"45–60 שנ׳"},{"muscle":"יד קדמית","exercise":"כפיפת מרפקים משקולות יד-יד","target_weight":"10 ק״ג כל יד","sets":3,"target_reps":10,"rest":"45–60 שנ׳"},{"muscle":"גב + דופק","exercise":"Kettlebell Clean + Press","target_weight":"10 ק״ג כל יד","sets":3,"target_reps":16,"rest":"45–60 שנ׳"}]},{"workout":3,"focus":"Legs + Full Body","exercises":[{"muscle":"רגליים קדמי","exercise":"סקוואט אחורי כנגד מוט","target_weight":"55 ק״ג","sets":3,"target_reps":8,"rest":"75–90 שנ׳"},{"muscle":"רגליים אחורי","exercise":"דדליפט רומני כנגד מוט","target_weight":"50 ק״ג","sets":3,"target_reps":8,"rest":"75–90 שנ׳"},{"muscle":"רגליים אחורי","exercise":"כפיפת ברך במכונה","target_weight":"25 ק״ג","sets":3,"target_reps":10,"rest":"45–60 שנ׳"},{"muscle":"רגליים קדמי","exercise":"פשיטת ברך במכונה","target_weight":"37.5 ק״ג","sets":3,"target_reps":10,"rest":"45–60 שנ׳"},{"muscle":"ישבן","exercise":"היפ תרסט במכונה","target_weight":"17.5 ק״ג","sets":3,"target_reps":8,"rest":"75–90 שנ׳"},{"muscle":"רגליים + דופק","exercise":"Kettlebell Goblet Squat","target_weight":"20 ק״ג","sets":3,"target_reps":14,"rest":"45–60 שנ׳"}]}]},{"week":8,"workouts":[{"workout":1,"focus":"Push + ליבה","exercises":[{"muscle":"חזה ניטרלי","exercise":"לחיצת חזה משקולות על ספסל שטוח","target_weight":"22.5 ק״ג כל יד","sets":3,"target_reps":8,"rest":"75–90 שנ׳"},{"muscle":"חזה עליון","exercise":"בנץ׳ חופשי בשיפוע חיובי","target_weight":"52.5 ק״ג","sets":3,"target_reps":8,"rest":"75–90 שנ׳"},{"muscle":"כתף אמצעית","exercise":"לחיצת כתפיים בישיבה עם משקולות","target_weight":"17.5 ק״ג כל יד","sets":3,"target_reps":8,"rest":"75–90 שנ׳"},{"muscle":"כתף אמצעית","exercise":"הרחקת כתף בעמידה","target_weight":"10 ק״ג כל יד","sets":3,"target_reps":10,"rest":"45–60 שנ׳"},{"muscle":"יד אחורית","exercise":"ריסוק גולגולות עם מוט","target_weight":"20 ק״ג","sets":3,"target_reps":10,"rest":"45–60 שנ׳"},{"muscle":"ליבה + דופק","exercise":"Kettlebell Swing","target_weight":"20 ק״ג","sets":3,"target_reps":18,"rest":"45–60 שנ׳"}]},{"workout":2,"focus":"Pull + מתח + Kettlebell","exercises":[{"muscle":"גב משיכה","exercise":"מתח בגרביטון","target_weight":"גרביטון: 27.5 ק״ג עזרה","sets":3,"target_reps":8,"rest":"75–90 שנ׳"},{"muscle":"גב משיכה","exercise":"משיכת פולי עליון מוט H","target_weight":"55 ק״ג","sets":3,"target_reps":8,"rest":"75–90 שנ׳"},{"muscle":"גב חתירה","exercise":"חתירת T-Bar אחיזה צרה","target_weight":"25 ק״ג","sets":3,"target_reps":8,"rest":"75–90 שנ׳"},{"muscle":"כתף אחורית","exercise":"פרפר הפוך במכונה","target_weight":"19 ק״ג","sets":3,"target_reps":10,"rest":"45–60 שנ׳"},{"muscle":"יד קדמית","exercise":"כפיפת מרפקים משקולות יד-יד","target_weight":"10 ק״ג כל יד","sets":3,"target_reps":10,"rest":"45–60 שנ׳"},{"muscle":"גב + דופק","exercise":"Kettlebell Clean + Press","target_weight":"10 ק״ג כל יד","sets":3,"target_reps":18,"rest":"45–60 שנ׳"}]},{"workout":3,"focus":"Legs + Full Body","exercises":[{"muscle":"רגליים קדמי","exercise":"סקוואט אחורי כנגד מוט","target_weight":"57.5 ק״ג","sets":3,"target_reps":8,"rest":"75–90 שנ׳"},{"muscle":"רגליים אחורי","exercise":"דדליפט רומני כנגד מוט","target_weight":"55 ק״ג","sets":3,"target_reps":8,"rest":"75–90 שנ׳"},{"muscle":"רגליים אחורי","exercise":"כפיפת ברך במכונה","target_weight":"27.5 ק״ג","sets":3,"target_reps":10,"rest":"45–60 שנ׳"},{"muscle":"רגליים קדמי","exercise":"פשיטת ברך במכונה","target_weight":"40 ק״ג","sets":3,"target_reps":10,"rest":"45–60 שנ׳"},{"muscle":"ישבן","exercise":"היפ תרסט במכונה","target_weight":"17.5 ק״ג","sets":3,"target_reps":8,"rest":"75–90 שנ׳"},{"muscle":"רגליים + דופק","exercise":"Kettlebell Goblet Squat","target_weight":"20 ק״ג","sets":3,"target_reps":16,"rest":"45–60 שנ׳"}]}]},{"week":9,"workouts":[{"workout":1,"focus":"Push + ליבה","exercises":[{"muscle":"חזה ניטרלי","exercise":"לחיצת חזה משקולות על ספסל שטוח","target_weight":"25 ק״ג כל יד","sets":3,"target_reps":8,"rest":"75–90 שנ׳"},{"muscle":"חזה עליון","exercise":"בנץ׳ חופשי בשיפוע חיובי","target_weight":"55 ק״ג","sets":3,"target_reps":8,"rest":"75–90 שנ׳"},{"muscle":"כתף אמצעית","exercise":"לחיצת כתפיים בישיבה עם משקולות","target_weight":"20 ק״ג כל יד","sets":3,"target_reps":8,"rest":"75–90 שנ׳"},{"muscle":"כתף אמצעית","exercise":"הרחקת כתף בעמידה","target_weight":"10 ק״ג כל יד","sets":3,"target_reps":12,"rest":"45–60 שנ׳"},{"muscle":"יד אחורית","exercise":"ריסוק גולגולות עם מוט","target_weight":"22.5 ק״ג","sets":3,"target_reps":10,"rest":"45–60 שנ׳"},{"muscle":"ליבה + דופק","exercise":"Kettlebell Swing","target_weight":"20 ק״ג","sets":3,"target_reps":20,"rest":"45–60 שנ׳"}]},{"workout":2,"focus":"Pull + מתח + Kettlebell","exercises":[{"muscle":"גב משיכה","exercise":"מתח בגרביטון","target_weight":"גרביטון: 25 ק״ג עזרה","sets":3,"target_reps":8,"rest":"75–90 שנ׳"},{"muscle":"גב משיכה","exercise":"משיכת פולי עליון מוט H","target_weight":"60 ק״ג","sets":3,"target_reps":8,"rest":"75–90 שנ׳"},{"muscle":"גב חתירה","exercise":"חתירת T-Bar אחיזה צרה","target_weight":"27.5 ק״ג","sets":3,"target_reps":8,"rest":"75–90 שנ׳"},{"muscle":"כתף אחורית","exercise":"פרפר הפוך במכונה","target_weight":"19 ק״ג","sets":3,"target_reps":12,"rest":"45–60 שנ׳"},{"muscle":"יד קדמית","exercise":"כפיפת מרפקים משקולות יד-יד","target_weight":"10 ק״ג כל יד","sets":3,"target_reps":10,"rest":"45–60 שנ׳"},{"muscle":"גב + דופק","exercise":"Kettlebell Clean + Press","target_weight":"10 ק״ג כל יד","sets":3,"target_reps":20,"rest":"45–60 שנ׳"}]},{"workout":3,"focus":"Legs + Full Body","exercises":[{"muscle":"רגליים קדמי","exercise":"סקוואט אחורי כנגד מוט","target_weight":"62.5 ק״ג","sets":3,"target_reps":8,"rest":"75–90 שנ׳"},{"muscle":"רגליים אחורי","exercise":"דדליפט רומני כנגד מוט","target_weight":"57.5 ק״ג","sets":3,"target_reps":8,"rest":"75–90 שנ׳"},{"muscle":"רגליים אחורי","exercise":"כפיפת ברך במכונה","target_weight":"27.5 ק״ג","sets":3,"target_reps":10,"rest":"45–60 שנ׳"},{"muscle":"רגליים קדמי","exercise":"פשיטת ברך במכונה","target_weight":"42.5 ק״ג","sets":3,"target_reps":10,"rest":"45–60 שנ׳"},{"muscle":"ישבן","exercise":"היפ תרסט במכונה","target_weight":"20 ק״ג","sets":3,"target_reps":8,"rest":"75–90 שנ׳"},{"muscle":"רגליים + דופק","exercise":"Kettlebell Goblet Squat","target_weight":"20 ק״ג","sets":3,"target_reps":18,"rest":"45–60 שנ׳"}]}]},{"week":10,"workouts":[{"workout":1,"focus":"Push + ליבה","exercises":[{"muscle":"חזה ניטרלי","exercise":"לחיצת חזה משקולות על ספסל שטוח","target_weight":"25 ק״ג כל יד","sets":3,"target_reps":6,"rest":"75–90 שנ׳"},{"muscle":"חזה עליון","exercise":"בנץ׳ חופשי בשיפוע חיובי","target_weight":"57.5 ק״ג","sets":3,"target_reps":6,"rest":"75–90 שנ׳"},{"muscle":"כתף אמצעית","exercise":"לחיצת כתפיים בישיבה עם משקולות","target_weight":"20 ק״ג כל יד","sets":3,"target_reps":6,"rest":"75–90 שנ׳"},{"muscle":"כתף אמצעית","exercise":"הרחקת כתף בעמידה","target_weight":"10 ק״ג כל יד","sets":3,"target_reps":8,"rest":"45–60 שנ׳"},{"muscle":"יד אחורית","exercise":"ריסוק גולגולות עם מוט","target_weight":"22.5 ק״ג","sets":3,"target_reps":8,"rest":"45–60 שנ׳"},{"muscle":"ליבה + דופק","exercise":"Kettlebell Swing","target_weight":"20 ק״ג","sets":3,"target_reps":20,"rest":"45–60 שנ׳"}]},{"workout":2,"focus":"Pull + מתח + Kettlebell","exercises":[{"muscle":"גב משיכה","exercise":"מתח בגרביטון","target_weight":"גרביטון: 22.5 ק״ג עזרה","sets":3,"target_reps":6,"rest":"75–90 שנ׳"},{"muscle":"גב משיכה","exercise":"משיכת פולי עליון מוט H","target_weight":"60 ק״ג","sets":3,"target_reps":6,"rest":"75–90 שנ׳"},{"muscle":"גב חתירה","exercise":"חתירת T-Bar אחיזה צרה","target_weight":"27.5 ק״ג","sets":3,"target_reps":6,"rest":"75–90 שנ׳"},{"muscle":"כתף אחורית","exercise":"פרפר הפוך במכונה","target_weight":"19 ק״ג","sets":3,"target_reps":8,"rest":"45–60 שנ׳"},{"muscle":"יד קדמית","exercise":"כפיפת מרפקים משקולות יד-יד","target_weight":"10 ק״ג כל יד","sets":3,"target_reps":8,"rest":"45–60 שנ׳"},{"muscle":"גב + דופק","exercise":"Kettlebell Clean + Press","target_weight":"10 ק״ג כל יד","sets":3,"target_reps":20,"rest":"45–60 שנ׳"}]},{"workout":3,"focus":"Legs + Full Body","exercises":[{"muscle":"רגליים קדמי","exercise":"סקוואט אחורי כנגד מוט","target_weight":"65 ק״ג","sets":3,"target_reps":6,"rest":"75–90 שנ׳"},{"muscle":"רגליים אחורי","exercise":"דדליפט רומני כנגד מוט","target_weight":"60 ק״ג","sets":3,"target_reps":6,"rest":"75–90 שנ׳"},{"muscle":"רגליים אחורי","exercise":"כפיפת ברך במכונה","target_weight":"30 ק״ג","sets":3,"target_reps":8,"rest":"45–60 שנ׳"},{"muscle":"רגליים קדמי","exercise":"פשיטת ברך במכונה","target_weight":"45 ק״ג","sets":3,"target_reps":8,"rest":"45–60 שנ׳"},{"muscle":"ישבן","exercise":"היפ תרסט במכונה","target_weight":"20 ק״ג","sets":3,"target_reps":6,"rest":"75–90 שנ׳"},{"muscle":"רגליים + דופק","exercise":"Kettlebell Goblet Squat","target_weight":"20 ק״ג","sets":3,"target_reps":20,"rest":"45–60 שנ׳"}]}]},{"week":11,"workouts":[{"workout":1,"focus":"Push + ליבה","exercises":[{"muscle":"חזה ניטרלי","exercise":"לחיצת חזה משקולות על ספסל שטוח","target_weight":"27.5 ק״ג כל יד","sets":3,"target_reps":6,"rest":"75–90 שנ׳"},{"muscle":"חזה עליון","exercise":"בנץ׳ חופשי בשיפוע חיובי","target_weight":"60 ק״ג","sets":3,"target_reps":6,"rest":"75–90 שנ׳"},{"muscle":"כתף אמצעית","exercise":"לחיצת כתפיים בישיבה עם משקולות","target_weight":"20 ק״ג כל יד","sets":3,"target_reps":6,"rest":"75–90 שנ׳"},{"muscle":"כתף אמצעית","exercise":"הרחקת כתף בעמידה","target_weight":"10 ק״ג כל יד","sets":3,"target_reps":8,"rest":"45–60 שנ׳"},{"muscle":"יד אחורית","exercise":"ריסוק גולגולות עם מוט","target_weight":"25 ק״ג","sets":3,"target_reps":8,"rest":"45–60 שנ׳"},{"muscle":"ליבה + דופק","exercise":"Kettlebell Swing","target_weight":"24 ק״ג","sets":3,"target_reps":18,"rest":"45–60 שנ׳"}]},{"workout":2,"focus":"Pull + מתח + Kettlebell","exercises":[{"muscle":"גב משיכה","exercise":"מתח בגרביטון","target_weight":"גרביטון: 20 ק״ג עזרה","sets":3,"target_reps":6,"rest":"75–90 שנ׳"},{"muscle":"גב משיכה","exercise":"משיכת פולי עליון מוט H","target_weight":"65 ק״ג","sets":3,"target_reps":6,"rest":"75–90 שנ׳"},{"muscle":"גב חתירה","exercise":"חתירת T-Bar אחיזה צרה","target_weight":"30 ק״ג","sets":3,"target_reps":6,"rest":"75–90 שנ׳"},{"muscle":"כתף אחורית","exercise":"פרפר הפוך במכונה","target_weight":"19 ק״ג","sets":3,"target_reps":8,"rest":"45–60 שנ׳"},{"muscle":"יד קדמית","exercise":"כפיפת מרפקים משקולות יד-יד","target_weight":"12.5 ק״ג כל יד","sets":3,"target_reps":8,"rest":"45–60 שנ׳"},{"muscle":"גב + דופק","exercise":"Kettlebell Clean + Press","target_weight":"10 ק״ג כל יד","sets":3,"target_reps":22,"rest":"45–60 שנ׳"}]},{"workout":3,"focus":"Legs + Full Body","exercises":[{"muscle":"רגליים קדמי","exercise":"סקוואט אחורי כנגד מוט","target_weight":"67.5 ק״ג","sets":3,"target_reps":6,"rest":"75–90 שנ׳"},{"muscle":"רגליים אחורי","exercise":"דדליפט רומני כנגד מוט","target_weight":"62.5 ק״ג","sets":3,"target_reps":6,"rest":"75–90 שנ׳"},{"muscle":"רגליים אחורי","exercise":"כפיפת ברך במכונה","target_weight":"30 ק״ג","sets":3,"target_reps":8,"rest":"45–60 שנ׳"},{"muscle":"רגליים קדמי","exercise":"פשיטת ברך במכונה","target_weight":"47.5 ק״ג","sets":3,"target_reps":8,"rest":"45–60 שנ׳"},{"muscle":"ישבן","exercise":"היפ תרסט במכונה","target_weight":"20 ק״ג","sets":3,"target_reps":6,"rest":"75–90 שנ׳"},{"muscle":"רגליים + דופק","exercise":"Kettlebell Goblet Squat","target_weight":"24 ק״ג","sets":3,"target_reps":18,"rest":"45–60 שנ׳"}]}]},{"week":12,"workouts":[{"workout":1,"focus":"Push + ליבה","exercises":[{"muscle":"חזה ניטרלי","exercise":"לחיצת חזה משקולות על ספסל שטוח","target_weight":"22.5 ק״ג כל יד","sets":3,"target_reps":8,"rest":"75–90 שנ׳"},{"muscle":"חזה עליון","exercise":"בנץ׳ חופשי בשיפוע חיובי","target_weight":"50 ק״ג","sets":3,"target_reps":8,"rest":"75–90 שנ׳"},{"muscle":"כתף אמצעית","exercise":"לחיצת כתפיים בישיבה עם משקולות","target_weight":"17.5 ק״ג כל יד","sets":3,"target_reps":8,"rest":"75–90 שנ׳"},{"muscle":"כתף אמצעית","exercise":"הרחקת כתף בעמידה","target_weight":"7.5 ק״ג כל יד","sets":3,"target_reps":10,"rest":"45–60 שנ׳"},{"muscle":"יד אחורית","exercise":"ריסוק גולגולות עם מוט","target_weight":"20 ק״ג","sets":3,"target_reps":10,"rest":"45–60 שנ׳"},{"muscle":"ליבה + דופק","exercise":"Kettlebell Swing","target_weight":"20 ק״ג","sets":3,"target_reps":16,"rest":"45–60 שנ׳"}]},{"workout":2,"focus":"Pull + מתח + Kettlebell","exercises":[{"muscle":"גב משיכה","exercise":"מתח בגרביטון","target_weight":"גרביטון: 27.5 ק״ג עזרה","sets":3,"target_reps":8,"rest":"75–90 שנ׳"},{"muscle":"גב משיכה","exercise":"משיכת פולי עליון מוט H","target_weight":"55 ק״ג","sets":3,"target_reps":8,"rest":"75–90 שנ׳"},{"muscle":"גב חתירה","exercise":"חתירת T-Bar אחיזה צרה","target_weight":"25 ק״ג","sets":3,"target_reps":8,"rest":"75–90 שנ׳"},{"muscle":"כתף אחורית","exercise":"פרפר הפוך במכונה","target_weight":"12 ק״ג","sets":3,"target_reps":10,"rest":"45–60 שנ׳"},{"muscle":"יד קדמית","exercise":"כפיפת מרפקים משקולות יד-יד","target_weight":"10 ק״ג כל יד","sets":3,"target_reps":10,"rest":"45–60 שנ׳"},{"muscle":"גב + דופק","exercise":"Kettlebell Clean + Press","target_weight":"10 ק״ג כל יד","sets":3,"target_reps":16,"rest":"45–60 שנ׳"}]},{"workout":3,"focus":"Legs + Full Body","exercises":[{"muscle":"רגליים קדמי","exercise":"סקוואט אחורי כנגד מוט","target_weight":"55 ק״ג","sets":3,"target_reps":8,"rest":"75–90 שנ׳"},{"muscle":"רגליים אחורי","exercise":"דדליפט רומני כנגד מוט","target_weight":"50 ק״ג","sets":3,"target_reps":8,"rest":"75–90 שנ׳"},{"muscle":"רגליים אחורי","exercise":"כפיפת ברך במכונה","target_weight":"25 ק״ג","sets":3,"target_reps":10,"rest":"45–60 שנ׳"},{"muscle":"רגליים קדמי","exercise":"פשיטת ברך במכונה","target_weight":"37.5 ק״ג","sets":3,"target_reps":10,"rest":"45–60 שנ׳"},{"muscle":"ישבן","exercise":"היפ תרסט במכונה","target_weight":"17.5 ק״ג","sets":3,"target_reps":8,"rest":"75–90 שנ׳"},{"muscle":"רגליים + דופק","exercise":"Kettlebell Goblet Squat","target_weight":"20 ק״ג","sets":3,"target_reps":16,"rest":"45–60 שנ׳"}]}]}]};
+
+// ─── SUPABASE SETUP ─────────────────────────────────────────────────────────
+const SUPA_URL = 'https://ibkhbojzvfxglgclxblo.supabase.co';
+const SUPA_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imlia2hib2p6dmZ4Z2xnY2x4YmxvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODE2MzMxOTQsImV4cCI6MjA5NzIwOTE5NH0.XIF8qpN7LDaR_vyuuCExUmuNwwR2nuC3lykVoN7Txcs';
+const ROW_ID = 'amit_main';
+let supa = null;
+let syncStatus = 'idle'; // idle | syncing | synced | error
+try{
+  supa = window.supabase.createClient(SUPA_URL, SUPA_KEY);
+}catch(e){console.log('Supabase init failed', e);}
+
+async function pullFromCloud(){
+  if(!supa){console.log('[SUPA] client not initialized');return false;}
+  try{
+    setSyncIndicator('syncing');
+    console.log('[SUPA] pulling...');
+    const {data, error} = await supa.from('workout_data').select('data,updated_at').eq('id', ROW_ID).maybeSingle();
+    if(error){console.log('[SUPA] pull error:',JSON.stringify(error),'| message:',error.message,'| code:',error.code,'| details:',error.details,'| hint:',error.hint);setSyncIndicator('error');return false;}
+    console.log('[SUPA] pull result:', data);
+    if(data && data.data){
+      S = Object.assign(defState(), data.data);
+      setSyncIndicator('synced');
+      console.log('[SUPA] loaded from cloud, updated_at:', data.updated_at);
+      return true;
+    }
+    console.log('[SUPA] no cloud data yet (first run)');
+    setSyncIndicator('synced');
+    return false;
+  }catch(e){console.log('[SUPA] pull exception:',e);setSyncIndicator('error');return false;}
+}
+
+let pushTimer=null;
+function pushToCloud(){
+  if(!supa){console.log('[SUPA] client not initialized, skip push');return;}
+  if(pushTimer) clearTimeout(pushTimer);
+  pushTimer = setTimeout(async ()=>{
+    try{
+      setSyncIndicator('syncing');
+      console.log('[SUPA] pushing...', S);
+      const {error} = await supa.from('workout_data').upsert({id:ROW_ID, data:S, updated_at:new Date().toISOString()});
+      if(error){console.log('[SUPA] push error:',JSON.stringify(error),'| message:',error.message,'| code:',error.code,'| details:',error.details,'| hint:',error.hint);setSyncIndicator('error');showToast('⚠️ שגיאת סנכרון: '+error.message);return;}
+      console.log('[SUPA] push success');
+      setSyncIndicator('synced');
+    }catch(e){console.log('[SUPA] push exception:',e);setSyncIndicator('error');}
+  },800);
+}
+
+function setSyncIndicator(status){
+  syncStatus=status;
+  const el=document.getElementById('sync-dot');
+  if(!el)return;
+  el.className='sync-dot sync-'+status;
+}
+
+// ─── STATE ───────────────────────────────────────────────────────────────────
+function defState(){return{tab:'home',workoutActive:false,currentWeek:2,wo:null,woKey:null,exIdx:0,setIdx:0,logs:[],allLogs:[],woStart:null,completedWos:{},savedWorkouts:{},bodyWeights:[88.2,87.9,88.1,87.8,87.5,null,null],weightNote:null}}
+let S=defState();
+function loadState(){
+  try{
+    const raw=localStorage.getItem('amit_wo_v2');
+    if(raw){const p=JSON.parse(raw);S=Object.assign(defState(),p);}
+  }catch(e){}
+}
+function save(){
+  // persist current mid-workout progress so resume works after navigating away
+  if(S.workoutActive && S.woKey){
+    S.savedWorkouts[S.woKey]={logs:[...S.logs],exIdx:S.exIdx,setIdx:S.setIdx,woStart:S.woStart};
+  }
+  try{
+    if(S.allLogs.length>500) S.allLogs=S.allLogs.slice(-500);
+    // strip transient runtime props before stringify to avoid quota issues
+    const {_restRem,...clean}=S;
+    const data=JSON.stringify(clean);
+    if(data.length>4500000){showToast('⚠️ אחסון כמעט מלא');return;}
+    localStorage.setItem('amit_wo_v2',data);
+  }catch(e){console.error('localStorage save failed',e);}
+  pushToCloud();
+}
+loadState();
+
+// ─── HELPERS ─────────────────────────────────────────────────────────────────
+function restSec(r){const m=r.match(/(\d+)/);return m?parseInt(m[1]):60;}
+function focusShort(f){if(f.includes('Push'))return 'Push';if(f.includes('Pull'))return 'Pull';if(f.includes('Leg'))return 'Legs';return f;}
+
+// ─── nextWo – תיקון: מחזיר האימון הבא שלא הושלם, כולל אימונים מדולגים ─────
+function nextWo(){
+  // חפש בשבוע הנוכחי תחילה
+  for(let wi=0;wi<3;wi++){
+    const k=S.currentWeek+'_'+wi;
+    if(!S.completedWos[k]) return {wkIdx:S.currentWeek-1,wIdx:wi,key:k};
+  }
+  // כל השבוע הושלם – עבור לשבוע הבא
+  if(S.currentWeek<12){
+    S.currentWeek++;
+    save();
+    return {wkIdx:S.currentWeek-1,wIdx:0,key:S.currentWeek+'_0'};
+  }
+  return {wkIdx:S.currentWeek-1,wIdx:0,key:S.currentWeek+'_0'};
+}
+
+// ─── TOAST ────────────────────────────────────────────────────────────────────
+let toastTimer=null;
+function showToast(msg){
+  const t=document.getElementById('toast');
+  t.textContent=msg;t.classList.add('show');
+  if(toastTimer)clearTimeout(toastTimer);
+  toastTimer=setTimeout(()=>t.classList.remove('show'),2200);
+}
+
+// ─── MODAL ────────────────────────────────────────────────────────────────────
+function openModal(id){document.getElementById(id).classList.add('active');}
+function closeModal(id){document.getElementById(id).classList.remove('active');}
+
+// ─── NAV ──────────────────────────────────────────────────────────────────────
+function goTab(t){
+  if(t==='workout'&&!S.workoutActive){startWorkout();return;}
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+  document.querySelectorAll('.nb').forEach(b=>b.classList.remove('active'));
+  const sc=document.getElementById('s-'+t);if(sc)sc.classList.add('active');
+  const nb=document.getElementById('nb-'+t);if(nb)nb.classList.add('active');
+  S.tab=t;
+  if(t==='home')renderHome();
+  if(t==='program')renderProgram();
+  if(t==='progress')renderProgress();
+  if(t==='weight')renderWeight();
+}
+
+// ─── HOME ─────────────────────────────────────────────────────────────────────
+function renderHome(){
+  const d=new Date();
+  const days=['ראשון','שני','שלישי','רביעי','חמישי','שישי','שבת'];
+  const hr=d.getHours();
+  document.getElementById('h-greet').textContent=(hr<12?'בוקר טוב':hr<17?'צהריים טובים':'ערב טוב')+', עמית 💪';
+  document.getElementById('h-date').textContent='יום '+days[d.getDay()]+', '+d.toLocaleDateString('he-IL');
+  document.getElementById('h-wbadge').textContent='שבוע '+S.currentWeek;
+  const done=Object.keys(S.completedWos).filter(k=>k.startsWith(S.currentWeek+'_')).length;
+  document.getElementById('h-prog-txt').textContent=done+'/3';
+  document.querySelectorAll('.wdot').forEach((dt,i)=>{
+    dt.className='wdot';
+    if(i<done)dt.classList.add('done');
+    else if(i===done)dt.classList.add('cur');
+  });
+  const nxt=nextWo();
+  const nwo=PLAN.weeks[nxt.wkIdx].workouts[nxt.wIdx];
+  document.getElementById('h-start-btn').textContent='התחל אימון – '+focusShort(nwo.focus);
+  document.getElementById('h-next-name').textContent='שבוע '+S.currentWeek+' · '+nwo.focus;
+  document.getElementById('h-next-meta').innerHTML='<span>⏱ ~50 דק׳</span><span>🏋️ '+nwo.exercises.length+' תרגילים</span>';
+  const lastKey=Object.keys(S.completedWos).sort().pop();
+  if(lastKey){
+    const parts=lastKey.split('_');
+    const lwo=PLAN.weeks[parseInt(parts[0])-1]?.workouts[parseInt(parts[1])];
+    const llogs=S.allLogs.filter(l=>l.woKey===lastKey);
+    const lr=llogs.map(l=>typeof l.rir==='number'?l.rir:3);
+    const lavg=lr.length?(lr.reduce((a,b)=>a+b,0)/lr.length).toFixed(1):'–';
+    document.getElementById('h-last-card').innerHTML=
+      '<div style="font-size:13px;font-weight:600;margin-bottom:4px">שבוע '+parts[0]+' · '+(lwo?.focus||'')+'</div>'+
+      '<div style="font-size:12px;color:var(--t3)">'+llogs.length+' סטים · ממוצע RIR: '+lavg+'</div>';
+  }
+  const notes=['מבצעים את המשקל והחזרות הכתובים בדיוק. לא מוסיפים חזרות.',
+    'שבוע '+S.currentWeek+' – הזן RIR בכנות אחרי כל סט.',
+    'אין סטים לפי הרגשה. הרגשה נכנסת רק דרך RIR.',
+    'Pull – לא מקצרים טווח. הגב מוביל, לא הידיים.'];
+  document.getElementById('h-coach').textContent=notes[S.currentWeek%notes.length];
+}
+
+// ─── WORKOUT ──────────────────────────────────────────────────────────────────
+let woTimerInt=null;
+
+function _navToWorkoutScreen(){
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+  document.querySelectorAll('.nb').forEach(b=>b.classList.remove('active'));
+  document.getElementById('s-workout').classList.add('active');
+  document.getElementById('nb-workout').classList.add('active','wo-live');
+  S.tab='workout';
+  if(woTimerInt)clearInterval(woTimerInt);
+  woTimerInt=setInterval(()=>{
+    const el=Math.floor((Date.now()-S.woStart)/1000);
+    const t=document.getElementById('wo-timer');
+    if(t)t.textContent=Math.floor(el/60).toString().padStart(2,'0')+':'+(el%60).toString().padStart(2,'0');
+  },1000);
+}
+
+// launch any workout: resume=true restores saved mid-workout progress
+function launchWorkout(wkIdx, wIdx, resume){
+  const k=(wkIdx+1)+'_'+wIdx;
+  const saved=S.savedWorkouts[k];
+  S.wo=JSON.parse(JSON.stringify(PLAN.weeks[wkIdx].workouts[wIdx]));
+  S.woKey=k;
+  S.currentWeek=wkIdx+1;
+  if(resume && saved){
+    S.logs=[...saved.logs];
+    S.exIdx=saved.exIdx;
+    S.setIdx=saved.setIdx;
+    S.woStart=saved.woStart;
+  } else {
+    S.logs=[];S.exIdx=0;S.setIdx=0;S.woStart=Date.now();
+    // clear any stale saved progress for a fresh start
+    delete S.savedWorkouts[k];
+  }
+  S.workoutActive=true;
+  save();
+  _navToWorkoutScreen();
+  renderWo();
+}
+
+function startWorkout(){
+  const nxt=nextWo();
+  // if there's saved progress for the next workout, resume it
+  const resume=!!S.savedWorkouts[nxt.key];
+  launchWorkout(nxt.wkIdx, nxt.wIdx, resume);
+}
+
+function renderWo(){
+  if(!S.wo)return;
+  const wo=S.wo;
+  const totalSets=wo.exercises.reduce((a,e)=>a+e.sets,0);
+  const pct=Math.round(S.logs.length/totalSets*100);
+  document.getElementById('wo-pfill').style.width=pct+'%';
+  document.getElementById('wo-sets-lbl').textContent=S.logs.length+' סטים';
+  document.getElementById('wo-ex-lbl').textContent='תרגיל '+(S.exIdx+1)+'/'+wo.exercises.length;
+  document.getElementById('wo-week-lbl').textContent='שבוע '+S.currentWeek;
+  document.getElementById('wo-title').textContent=wo.focus;
+  const sc=document.getElementById('wo-scroll');sc.innerHTML='';sc.scrollTop=0;
+
+  // ── active set area ──
+  const ex=wo.exercises[S.exIdx];
+  if(ex){
+    const as=document.createElement('div');as.className='aset fade-in';
+    as.innerHTML=`
+      <div class="aset-lbl">תרגיל ${S.exIdx+1}/${wo.exercises.length} · ${ex.muscle}</div>
+      <div class="aset-name">${ex.exercise}</div>
+      <div class="aset-stats">
+        <div class="astat"><div class="astat-v">${ex.target_weight.replace(/ ק״ג.*/,'')}</div><div class="astat-l">ק״ג</div></div>
+        <div class="astat"><div class="astat-v">${ex.target_reps}</div><div class="astat-l">חזרות</div></div>
+        <div class="astat"><div class="astat-v">${S.setIdx+1}/${ex.sets}</div><div class="astat-l">סט</div></div>
+      </div>
+      <div class="coach-tip">בצע ${ex.target_reps} חזרות בדיוק. לא יותר, לא פחות.</div>
+      ${ex.target_weight.includes('גרביטון')?'<div class="note-tip">💬 '+ex.target_weight+'</div>':''}
+      <div style="display:flex;gap:8px">
+        <button class="btn" onclick="completeSet()" style="flex:1;font-size:16px;padding:15px">✅ סיימתי סט</button>
+        <button onclick="openUndoModal()" title="בטל סט אחרון" style="background:var(--bg4);border:1px solid var(--bd);border-radius:var(--r);padding:15px 14px;cursor:pointer;font-size:18px;color:var(--t3)">↩</button>
+        <button onclick="openEndModal()" title="סיים אימון" style="background:var(--bg4);border:1px solid var(--bd);border-radius:var(--r);padding:15px 14px;cursor:pointer;font-size:18px;color:var(--t3)">⏹</button>
+      </div>`;
+    sc.appendChild(as);
+  }
+
+  // ── exercise list ──
+  let lastCat='';
+  wo.exercises.forEach((e,ei)=>{
+    if(e.muscle!==lastCat){
+      const ch=document.createElement('div');ch.className='cat-hdr';ch.textContent=e.muscle;sc.appendChild(ch);lastCat=e.muscle;
+    }
+    const isAc=ei===S.exIdx,isDn=ei<S.exIdx;
+    const sForThis=S.logs.filter(l=>l.exIdx===ei).length;
+    const allDone=sForThis>=e.sets;
+    const card=document.createElement('div');
+    card.className='ex-card'+(isAc?' ac':'')+(allDone&&!isAc?' dn':'');
+    const dots=Array.from({length:e.sets},(_,si)=>{
+      const d=si<sForThis,c=isAc&&si===S.setIdx&&!d;
+      return '<div class="sd'+(d?' done':'')+(c?' cur':'')+'"></div>';
+    }).join('');
+    card.innerHTML=`
+      <div style="flex:1" onclick="jumpToEx(${ei})">
+        <div class="ex-name">${e.exercise}</div>
+        <div class="ex-meta">${e.target_weight} · ${e.target_reps} חזרות · ${e.sets} סטים · ${e.rest}</div>
+        <div class="sdots">${dots}</div>
+      </div>
+      ${allDone?'<span style="font-size:16px">✅</span>':isAc?'<span style="color:var(--or);font-size:18px">▶</span>':'<span style="font-size:12px;color:var(--t4);cursor:pointer;padding:4px" onclick="jumpToEx('+ei+')">עבור</span>'}`;
+    sc.appendChild(card);
+  });
+}
+
+// ── סיים אימון ידני ──────────────────────────────────────────────────────────
+function openEndModal(){
+  const wo=S.wo;if(!wo)return;
+  const total=wo.exercises.reduce((a,e)=>a+e.sets,0);
+  document.getElementById('modal-end-sub').textContent=
+    'בוצעו '+S.logs.length+' סטים מתוך '+total+'. האימון יישמר כחלקי.';
+  openModal('modal-end');
+}
+function confirmEndWorkout(){
+  closeModal('modal-end');
+  showSum();
+}
+
+// ── undo סט אחרון ────────────────────────────────────────────────────────────
+function openUndoModal(){
+  if(!S.logs.length){showToast('אין סטים לביטול');return;}
+  const last=S.logs[S.logs.length-1];
+  const ex=S.wo?.exercises[last.exIdx];
+  document.getElementById('modal-undo-sub').textContent=
+    'סט '+(last.setIdx+1)+' של '+( ex?.exercise||'')+(last.abn?' · '+last.abn:'')+' · RIR '+last.rir;
+  openModal('modal-undo');
+}
+function confirmUndo(){
+  closeModal('modal-undo');
+  if(!S.logs.length)return;
+  const removed=S.logs.pop();
+  // sync allLogs
+  const idx=S.allLogs.map(l=>l.woKey+l.exIdx+l.setIdx).lastIndexOf(removed.woKey+removed.exIdx+removed.setIdx);
+  if(idx>-1)S.allLogs.splice(idx,1);
+  // restore state
+  S.exIdx=removed.exIdx;
+  S.setIdx=removed.setIdx;
+  save();renderWo();
+  showToast('↩ סט בוטל');
+}
+
+// ── קפיצה חופשית לתרגיל ─────────────────────────────────────────────────────
+function jumpToEx(ei){
+  if(!S.wo)return;
+  const doneSets=S.logs.filter(l=>l.exIdx===ei).length;
+  S.exIdx=ei;
+  S.setIdx=Math.min(doneSets,S.wo.exercises[ei].sets-1);
+  save();renderWo();
+}
+
+// ─── RIR / SET LOGGING ───────────────────────────────────────────────────────
+let curAbn=null,curRIR=null;
+function completeSet(){
+  const ex=S.wo.exercises[S.exIdx];
+  const sc=document.getElementById('wo-scroll');
+  const as=sc.querySelector('.aset');if(!as)return;
+  curAbn=null;curRIR=null;
+  as.innerHTML=`
+    <div class="rir-title">הזן RIR – ${ex.exercise}</div>
+    <div class="rir-sub">כמה חזרות נקיות נותרו? עצרת ב-${ex.target_reps}.</div>
+    <div class="rir-grid">
+      ${[0,1,2,3,4,'5+'].map((r,i)=>`<button class="rir-btn" onclick="selRIR(this,${i<5?r:"'5+'"})"> ${r}</button>`).join('')}
+    </div>
+    <div class="abn-title">הערה חריגה (אופציונלי)</div>
+    <div class="abn-grid">
+      ${['כבד מדי','קל מדי','כאב','טכניקה לא טובה','לא הצלחתי יעד','ציוד לא זמין'].map(n=>`<button class="abn-btn" onclick="togAbn(this,'${n}')">${n}</button>`).join('')}
+    </div>
+    <button class="btn" id="save-set-btn" onclick="saveSet()" style="opacity:.3;pointer-events:none;font-size:15px;padding:14px">שמור סט והמשך</button>
+  `;
+}
+function togAbn(btn,n){
+  document.querySelectorAll('.abn-btn').forEach(b=>b.classList.remove('sel'));
+  if(curAbn===n){curAbn=null;return;}
+  btn.classList.add('sel');curAbn=n;
+}
+function selRIR(btn,rir){
+  document.querySelectorAll('.rir-btn').forEach(b=>b.classList.remove('sel'));
+  btn.classList.add('sel');curRIR=rir;
+  const sb=document.getElementById('save-set-btn');
+  if(sb){sb.style.opacity='1';sb.style.pointerEvents='auto';}
+}
+function saveSet(){
+  if(curRIR===null)return;
+  const ex=S.wo.exercises[S.exIdx];
+  const rirVal=(curRIR==='5+')?5:typeof curRIR==='number'?curRIR:parseInt(curRIR)||0;
+  const lastSet=S.setIdx>=ex.sets-1;
+  const lastEx=S.exIdx>=S.wo.exercises.length-1;
+  const rs=restSec(ex.rest);
+  const nextLabel=lastSet&&lastEx?'האימון הסתיים!'
+    :lastSet?'הבא: '+S.wo.exercises[S.exIdx+1].exercise
+    :'הבא: סט '+(S.setIdx+2)+' – '+ex.exercise;
+
+  S.logs.push({exIdx:S.exIdx,setIdx:S.setIdx,rir:rirVal,abn:curAbn,woKey:S.woKey});
+  S.allLogs.push({exIdx:S.exIdx,setIdx:S.setIdx,rir:rirVal,abn:curAbn,woKey:S.woKey,exName:ex.exercise,week:S.currentWeek});
+  curAbn=null;curRIR=null;
+
+  // advance state ONCE here
+  if(!lastSet){S.setIdx++;}
+  else if(!lastEx){S.exIdx++;S.setIdx=0;}
+  save();
+  showRestPanel(rs,nextLabel,lastSet&&lastEx);
+}
+
+// ─── REST PANEL ───────────────────────────────────────────────────────────────
+let restInt=null,restTotal=0,_restEnd=false;
+function showRestPanel(sec,label,isEnd){
+  _restEnd=isEnd;
+  const sc=document.getElementById('wo-scroll');
+  const as=sc.querySelector('.aset');if(!as)return;
+  as.innerHTML=`
+    <div style="text-align:center;padding:6px 0 4px">
+      <div style="font-size:12px;color:var(--t3);font-weight:600;letter-spacing:.5px;margin-bottom:8px">✅ סט נשמר · ${label}</div>
+    </div>
+    <button class="btn" onclick="openRestTimer(${sec})" style="margin-bottom:10px;padding:14px;font-size:15px">
+      ⏱ טיימר מנוחה &nbsp;${Math.floor(sec/60)}:${(sec%60).toString().padStart(2,'0')}
+    </button>
+    <button class="btn2" onclick="${isEnd?'showSum()':'renderWo()'}" style="font-size:15px;padding:13px">
+      ${isEnd?'סיים אימון ←':'המשך לסט הבא →'}
+    </button>`;
+}
+function openRestTimer(sec){
+  document.getElementById('rest-scr').classList.add('active');
+  document.querySelector('.bnav').style.display='none';
+  document.getElementById('rest-next').textContent='';
+  document.getElementById('rest-sdone').textContent=S.logs.length;
+  restTotal=sec;S._restRem=sec;updateRestDisp();
+  if(restInt)clearInterval(restInt);
+  restInt=setInterval(()=>{
+    S._restRem--;updateRestDisp();
+    if(S._restRem<=0){clearInterval(restInt);closeRest();}
+  },1000);
+}
+function updateRestDisp(){
+  const r=Math.max(0,S._restRem||0);
+  document.getElementById('rest-cd').textContent=Math.floor(r/60)+':'+(r%60).toString().padStart(2,'0');
+  document.getElementById('rest-pf').style.width=Math.max(0,(r/restTotal)*100)+'%';
+}
+function addRest(){S._restRem+=30;updateRestDisp();}
+function skipRest(){if(restInt)clearInterval(restInt);closeRest();}
+function closeRest(){
+  document.getElementById('rest-scr').classList.remove('active');
+  document.querySelector('.bnav').style.display='flex';
+  if(_restEnd){showSum();return;}
+  renderWo();
+}
+
+// ─── SUMMARY ─────────────────────────────────────────────────────────────────
+function showSum(){
+  clearInterval(woTimerInt);
+  const dur=Math.round((Date.now()-S.woStart)/60000);
+  const rirs=S.logs.map(l=>typeof l.rir==='number'?l.rir:5);
+  const avg=rirs.length?(rirs.reduce((a,b)=>a+b,0)/rirs.length).toFixed(1):'–';
+  document.getElementById('s-sets').textContent=S.logs.length;
+  document.getElementById('s-rir').textContent=avg;
+  document.getElementById('s-dur').textContent=dur;
+  document.getElementById('s-exs').textContent=S.wo?.exercises.length||'–';
+  document.getElementById('sum-date').textContent=new Date().toLocaleDateString('he-IL',{weekday:'long',year:'2-digit',month:'2-digit',day:'2-digit'});
+  const ar=parseFloat(avg);
+  let c='אימון הושלם.';
+  if(ar>=1&&ar<=3)c='אימון טוב. רוב הסטים היו באזור RIR 1–3. המשקלים נראים מדויקים.';
+  else if(ar>3)c='האימון היה קל יחסית. אם זה יחזור, נשקול להעלות משקלים.';
+  else if(ar<1&&!isNaN(ar))c='אימון כבד. ודא שינה ותזונה מספקים לפני הבא.';
+  document.getElementById('s-coach').textContent=c;
+  const abns=S.logs.filter(l=>l.abn);
+  const fl=document.getElementById('s-flags');fl.innerHTML='';
+  if(abns.length){
+    const d=document.createElement('div');d.className='coach-box';
+    d.innerHTML='<div class="coach-text">⚠️ '+abns.length+' הערות: '+[...new Set(abns.map(a=>a.abn))].join(', ')+'</div>';
+    fl.appendChild(d);
+  }
+  const totalSets=S.wo?.exercises.reduce((a,e)=>a+e.sets,0)||0;
+  if(S.logs.length<totalSets){
+    const d=document.createElement('div');d.className='coach-box';
+    d.style.borderRightColor='var(--t4)';
+    d.innerHTML='<div class="coach-text">📋 הושלמו '+S.logs.length+' מתוך '+totalSets+' סטים.</div>';
+    fl.appendChild(d);
+  }
+  S.completedWos[S.woKey]=true;S.workoutActive=false;
+  delete S.savedWorkouts[S.woKey]; // clear in-progress save on completion
+  document.getElementById('nb-workout').classList.remove('wo-live');
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+  document.querySelectorAll('.nb').forEach(b=>b.classList.remove('active'));
+  document.getElementById('s-summary').classList.add('active');
+  document.getElementById('nb-home').classList.add('active');
+  save();
+}
+function finishSum(){
+  clearInterval(woTimerInt);
+  goTab('home');
+}
+
+// ─── PROGRAM ─────────────────────────────────────────────────────────────────
+let _modalResetWeek=null, _resetWoKey=null, _resetWoWeek=null;
+
+function changeWeek(dir){
+  const cur = parseInt(document.getElementById('prog-week-lbl').textContent.replace('שבוע ',''));
+  const next = Math.max(1, Math.min(12, cur + dir));
+  renderProgram(next);
+}
+
+function renderProgram(focusWeek){
+  if(focusWeek===undefined) focusWeek = S.currentWeek;
+  document.getElementById('prog-week-lbl').textContent = 'שבוע '+focusWeek;
+  const pl=document.getElementById('prog-list'); pl.innerHTML='';
+
+  const weekHdr = document.createElement('div');
+  weekHdr.style.cssText='padding:0 14px 10px;display:flex;justify-content:space-between;align-items:center';
+  const wk = PLAN.weeks[focusWeek-1];
+  const doneInWeek = Object.keys(S.completedWos).filter(k=>k.startsWith(focusWeek+'_')).length;
+  const isCur = focusWeek===S.currentWeek;
+  const isPast = focusWeek<S.currentWeek;
+  const statusTxt = doneInWeek===3?'הושלם':isCur?'פעיל':isPast?'פוספס':'עתידי';
+  const statusCol = doneInWeek===3?'var(--green)':isCur?'var(--or)':'var(--t4)';
+  weekHdr.innerHTML=`
+    <div style="font-size:14px;color:${statusCol};font-weight:700">${statusTxt} · ${doneInWeek}/3 אימונים</div>
+    <button onclick="openResetWeekModal(${focusWeek})" style="background:rgba(239,68,68,.1);border:1px solid rgba(239,68,68,.3);border-radius:var(--rsm);padding:6px 12px;font-size:12px;font-weight:600;color:var(--red);cursor:pointer">אפס שבוע</button>
+  `;
+  pl.appendChild(weekHdr);
+
+  wk.workouts.forEach((wo,wi)=>{
+    const k=focusWeek+'_'+wi;
+    const done=!!S.completedWos[k];
+    const inProgress=!!S.savedWorkouts[k];
+    const logsForWo = S.allLogs.filter(l=>l.woKey===k);
+    const rirs = logsForWo.map(l=>l.rir).filter(r=>typeof r==='number');
+    const avgRir = rirs.length ? (rirs.reduce((a,b)=>a+b,0)/rirs.length).toFixed(1) : null;
+
+    let statusHtml;
+    if(done) statusHtml=`<span style="font-size:11px;padding:3px 9px;border-radius:20px;font-weight:600;background:rgba(34,197,94,.12);color:var(--green)">✓ הושלם</span>`;
+    else if(inProgress) statusHtml=`<span style="font-size:11px;padding:3px 9px;border-radius:20px;font-weight:600;background:rgba(249,115,22,.15);color:var(--or)">● בתהליך</span>`;
+    else statusHtml=`<span style="font-size:11px;padding:3px 9px;border-radius:20px;font-weight:600;background:var(--bg5);color:var(--t4)">טרם</span>`;
+
+    const card=document.createElement('div');
+    card.className='card';
+    card.style.cssText='padding:14px 16px';
+    card.innerHTML=`
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:6px">
+        <div style="font-size:15px;font-weight:700">${wo.focus}</div>
+        ${statusHtml}
+      </div>
+      <div style="font-size:12px;color:var(--t3);margin-bottom:6px">${wo.exercises.length} תרגילים · ${wo.exercises[0]?.rest||''} מנוחה</div>
+      ${avgRir!==null?`<div style="font-size:12px;color:var(--t4);margin-bottom:8px">ממוצע RIR: <span style="color:var(--or);font-weight:600">${avgRir}</span> · ${logsForWo.length} סטים</div>`:''}
+      <div style="display:flex;flex-direction:column;gap:3px;margin-bottom:12px">
+        ${wo.exercises.slice(0,3).map(e=>`<div style="font-size:12px;color:var(--t3)">· ${e.exercise} – ${e.target_weight}</div>`).join('')}
+        ${wo.exercises.length>3?`<div style="font-size:11px;color:var(--t4)">ועוד ${wo.exercises.length-3} תרגילים...</div>`:''}
+      </div>
+      <div style="display:flex;gap:7px">
+        ${inProgress
+          ? `<button onclick="launchWorkout(${focusWeek-1},${wi},true)" style="flex:2;background:var(--or);color:#fff;border:none;border-radius:var(--rsm);padding:11px 8px;font-size:13px;font-weight:700;cursor:pointer">▶ המשך אימון</button>`
+          : `<button onclick="launchWorkout(${focusWeek-1},${wi},false)" style="flex:2;background:var(--or);color:#fff;border:none;border-radius:var(--rsm);padding:11px 8px;font-size:13px;font-weight:700;cursor:pointer">${done?'חזור ואמן שוב':'התחל אימון'}</button>`
+        }
+        ${inProgress
+          ? `<button onclick="launchWorkout(${focusWeek-1},${wi},false)" style="flex:1;background:var(--bg4);color:var(--t2);border:1px solid var(--bd);border-radius:var(--rsm);padding:11px 8px;font-size:12px;font-weight:600;cursor:pointer">התחל מחדש</button>`
+          : ''
+        }
+        ${(done||inProgress)
+          ? `<button onclick="openResetWoModal('${k}',${focusWeek})" style="background:rgba(239,68,68,.1);color:var(--red);border:1px solid rgba(239,68,68,.3);border-radius:var(--rsm);padding:11px 10px;font-size:12px;font-weight:600;cursor:pointer">אפס</button>`
+          : ''
+        }
+      </div>
+    `;
+    pl.appendChild(card);
+  });
+
+  const nav=document.createElement('div');
+  nav.style.cssText='padding:16px 14px 8px';
+  nav.innerHTML='<div style="font-size:11px;color:var(--t4);font-weight:700;text-transform:uppercase;letter-spacing:.8px;margin-bottom:10px">כל השבועות</div>';
+  const grid=document.createElement('div');
+  grid.style.cssText='display:grid;grid-template-columns:repeat(6,1fr);gap:6px';
+  for(let w=1;w<=12;w++){
+    const btn=document.createElement('button');
+    const wDone=Object.keys(S.completedWos).filter(k=>k.startsWith(w+'_')).length;
+    const wInProg=Object.keys(S.savedWorkouts).some(k=>k.startsWith(w+'_'));
+    const isActive=w===focusWeek;
+    btn.style.cssText='border-radius:var(--rsm);padding:8px 4px;font-size:13px;font-weight:700;cursor:pointer;border:1px solid '+(isActive?'var(--or)':'var(--bd)')+';background:'+(isActive?'var(--or)':wDone===3?'rgba(34,197,94,.1)':wInProg?'rgba(249,115,22,.1)':'var(--bg4)')+';color:'+(isActive?'#fff':wDone===3?'var(--green)':wInProg?'var(--or)':'var(--t2)');
+    btn.textContent=w;
+    btn.onclick=()=>renderProgram(w);
+    grid.appendChild(btn);
+  }
+  nav.appendChild(grid);
+  pl.appendChild(nav);
+  const space=document.createElement('div');space.style.height='70px';pl.appendChild(space);
+}
+
+function openResetWoModal(key, week){
+  _resetWoKey=key; _resetWoWeek=week;
+  document.getElementById('modal-wo-title').textContent='אפס אימון זה?';
+  document.getElementById('modal-wo-sub').textContent='כל ההתקדמות והנתונים של אימון זה יימחקו.';
+  document.getElementById('modal-wo-start-btn').style.display='none';
+  document.getElementById('modal-wo-reset-btn').style.display='block';
+  document.getElementById('modal-wo-reset-btn').textContent='כן, אפס אימון';
+  openModal('modal-wo-opts');
+}
+
+function startWorkoutFromModal(){ closeModal('modal-wo-opts'); }
+
+function resetWorkoutFromModal(){
+  closeModal('modal-wo-opts');
+  document.getElementById('modal-wo-start-btn').style.display='block';
+  if(!_resetWoKey)return;
+  delete S.completedWos[_resetWoKey];
+  delete S.savedWorkouts[_resetWoKey];
+  save();
+  renderProgram(_resetWoWeek);
+  showToast('↩ אימון אופס');
+}
+
+function openResetWeekModal(week){
+  _modalResetWeek=week;
+  document.getElementById('modal-wr-title').textContent='אפס שבוע '+week+'?';
+  openModal('modal-week-reset');
+}
+
+function confirmResetWeek(){
+  closeModal('modal-week-reset');
+  if(!_modalResetWeek)return;
+  [0,1,2].forEach(i=>{
+    const k=_modalResetWeek+'_'+i;
+    delete S.completedWos[k];
+    delete S.savedWorkouts[k];
+  });
+  S.currentWeek=_modalResetWeek;
+  save();
+  renderProgram(_modalResetWeek);
+  renderHome();
+  showToast('↩ שבוע '+_modalResetWeek+' אופס');
+}
+
+// ─── WEIGHT ───────────────────────────────────────────────────────────────────
+let selWN=null;
+function togWN(btn,n){
+  document.querySelectorAll('.wn-btn').forEach(b=>b.classList.remove('sel'));
+  if(selWN===n){selWN=null;return;}
+  btn.classList.add('sel');selWN=n;
+}
+function saveWeight(){
+  const v=parseFloat(document.getElementById('w-input').value);
+  if(!v||v<40||v>200){showToast('הזן משקל תקין');return;}
+  S.bodyWeights[6]=v;save();
+  document.getElementById('wt-now').textContent=v;
+  document.getElementById('w-today-lbl').textContent='נשמר: '+v+' ק״ג';
+  const valid=S.bodyWeights.filter(x=>x!==null);
+  document.getElementById('wt-avg').textContent=(valid.reduce((a,b)=>a+b,0)/valid.length).toFixed(1);
+  const chg=(v-88).toFixed(1);
+  const el=document.getElementById('wt-chg');
+  el.textContent=(parseFloat(chg)>0?'+':'')+chg;
+  el.style.color=parseFloat(chg)<=0?'var(--green)':'var(--red)';
+  renderWtChart();showToast('✅ משקל נשמר');
+}
+function renderWeight(){
+  const v=S.bodyWeights[6];
+  document.getElementById('wt-now').textContent=v||'–';
+  document.getElementById('w-today-lbl').textContent=v?'נשמר: '+v+' ק״ג':'לא הוזן היום';
+  const valid=S.bodyWeights.filter(x=>x!==null);
+  if(valid.length) document.getElementById('wt-avg').textContent=(valid.reduce((a,b)=>a+b,0)/valid.length).toFixed(1);
+  setTimeout(renderWtChart,80);
+}
+function renderWtChart(){
+  const c=document.getElementById('wt-chart');if(!c)return;
+  const ctx=c.getContext('2d');
+  const dpr=window.devicePixelRatio||1;
+  const w=c.offsetWidth||300,h=80;
+  c.width=w*dpr;c.height=h*dpr;c.style.width=w+'px';c.style.height=h+'px';
+  ctx.scale(dpr,dpr);ctx.clearRect(0,0,w,h);
+  const data=S.bodyWeights;
+  const valid=data.filter(v=>v!==null);
+  if(valid.length<2)return;
+  const min=Math.min(...valid)-.5,max=Math.max(...valid)+.5;
+  const pts=data.map((v,i)=>v!==null?{x:(i/(data.length-1))*(w-20)+10,y:h-((v-min)/(max-min))*(h-16)-8}:null);
+  ctx.strokeStyle='#f97316';ctx.lineWidth=2;ctx.lineJoin='round';
+  ctx.beginPath();let first=true;
+  pts.forEach(p=>{if(!p)return;if(first){ctx.moveTo(p.x,p.y);first=false;}else ctx.lineTo(p.x,p.y);});
+  ctx.stroke();
+  ctx.fillStyle='#f97316';
+  pts.forEach(p=>{if(!p)return;ctx.beginPath();ctx.arc(p.x,p.y,3,0,Math.PI*2);ctx.fill();});
+  ctx.fillStyle='#6b7280';ctx.font='10px sans-serif';ctx.textAlign='center';
+  ['א׳','ב׳','ג׳','ד׳','ה׳','ו׳','ש׳'].forEach((d,i)=>{if(pts[i])ctx.fillText(d,pts[i].x,h-1);});
+}
+
+// ─── PROGRESS ─────────────────────────────────────────────────────────────────
+function renderProgress(){
+  const total=Object.keys(S.completedWos).length;
+  const planned=S.currentWeek*3;
+  document.getElementById('pr-done').textContent=total+'/'+(planned<=36?planned:36);
+  document.getElementById('pr-pct').textContent=planned>0?Math.round(total/planned*100)+'%':'0%';
+  const ins=document.getElementById('pr-insights');ins.innerHTML='';
+  const exStats={};
+  S.allLogs.forEach(l=>{
+    if(!exStats[l.exName])exStats[l.exName]={rirs:[],abns:[]};
+    if(typeof l.rir==='number')exStats[l.exName].rirs.push(l.rir);
+    if(l.abn)exStats[l.exName].abns.push(l.abn);
+  });
+  const insights=[];
+  Object.entries(exStats).forEach(([name,st])=>{
+    if(st.rirs.length<3)return;
+    const avg=st.rirs.reduce((a,b)=>a+b,0)/st.rirs.length;
+    if(avg>=3.5)insights.push({t:'🟠 קל מדי',b:name+' – ממוצע RIR '+avg.toFixed(1)+'. שקול עלייה במשקל.'});
+    else if(avg>=1&&avg<3)insights.push({t:'🟢 יעד טוב',b:name+' – RIR '+avg.toFixed(1)+'. המשקל מדויק.'});
+    else if(avg<1)insights.push({t:'🔴 כבד מדי',b:name+' – RIR '+avg.toFixed(1)+'. שים לב לשינה.'});
+  });
+  if(!insights.length){
+    const d=document.createElement('div');d.className='ins-card';
+    d.innerHTML='<div class="ins-t">אין עדיין מספיק נתונים</div><div class="ins-b">בצע 3+ סטים לכל תרגיל כדי לראות תובנות.</div>';
+    ins.appendChild(d);
+  }
+  insights.slice(0,5).forEach(i=>{
+    const d=document.createElement('div');d.className='ins-card';
+    d.innerHTML='<div class="ins-t">'+i.t+'</div><div class="ins-b">'+i.b+'</div>';ins.appendChild(d);
+  });
+  const exList=document.getElementById('pr-exlist');exList.innerHTML='';
+  Object.entries(exStats).slice(0,8).forEach(([name,st])=>{
+    if(!st.rirs.length)return;
+    const avg=st.rirs.reduce((a,b)=>a+b,0)/st.rirs.length;
+    const lbl=avg>=3.5?'קל מדי':avg>=1?'יעד טוב':'כבד מדי';
+    const cls=avg>=3.5?'esb-easy':avg>=1?'esb-ok':'esb-hard';
+    const el=document.createElement('div');el.style.marginBottom='10px';
+    el.innerHTML='<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:3px"><div style="font-size:12px;font-weight:600">'+name+'</div><span class="esb '+cls+'">'+lbl+'</span></div><div class="bw"><div class="bf" style="width:'+Math.min(100,Math.round(avg/5*100))+'%"></div></div>';
+    exList.appendChild(el);
+  });
+}
+
+// ─── INIT ─────────────────────────────────────────────────────────────────────
+(async function init(){
+  await pullFromCloud(); // נסה למשוך נתונים עדכניים מהענן לפני הרינדור הראשון
+  renderHome();
+})();
+try{if(navigator.wakeLock)navigator.wakeLock.request('screen').catch(()=>{});}catch(e){}
+
+// רישום Service Worker
+if('serviceWorker' in navigator){
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('./sw.js')
+      .catch(err => console.log('SW registration failed:', err));
+  });
+}
+</script>
+</body>
+</html>
