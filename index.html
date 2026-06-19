@@ -151,41 +151,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 
 <!-- HOME -->
 <div id="s-home" class="screen active">
-  <div class="scroll">
-    <div class="h-header">
-      <div>
-        <div class="greeting" id="h-greet">בוקר טוב, עמית 💪</div>
-        <div style="font-size:12px;color:var(--t3);margin-top:3px" id="h-date"></div>
-      </div>
-      <div class="wbadge" id="h-wbadge">שבוע 1</div>
-    </div>
-    <div style="padding:0 14px 6px;display:flex;align-items:center;justify-content:flex-end">
-      <span style="font-size:11px;color:var(--t4)">סנכרון לענן</span>
-      <span class="sync-dot sync-idle" id="sync-dot"></span>
-    </div>
-    <div class="wprog" id="h-wprog">
-      <div class="wdot"></div><div class="wdot"></div><div class="wdot"></div>
-      <div style="font-size:12px;color:var(--t3);margin-right:4px" id="h-prog-txt">0/3</div>
-    </div>
-    <div style="padding:0 14px 10px">
-      <button class="btn" onclick="startWorkout()" id="h-start-btn">התחל אימון</button>
-    </div>
-    <div style="padding:0 14px 14px">
-      <button class="btn2" onclick="goTab('weight')">הזן משקל בוקר</button>
-    </div>
-    <div class="slbl">האימון הבא</div>
-    <div class="card" id="h-next-card" onclick="startWorkout()" style="cursor:pointer;padding:14px 16px">
-      <div style="font-size:15px;font-weight:700;margin-bottom:7px" id="h-next-name">–</div>
-      <div style="font-size:12px;color:var(--t3);display:flex;gap:12px" id="h-next-meta"></div>
-    </div>
-    <div class="slbl" style="margin-top:4px">אימון קודם</div>
-    <div class="card" id="h-last-card" style="padding:14px 16px">
-      <div style="font-size:13px;color:var(--t3)">טרם בוצע אימון</div>
-    </div>
-    <div class="slbl" style="margin-top:4px">הערת מאמן</div>
-    <div class="coach-box"><div class="coach-text" id="h-coach"></div></div>
-    <div style="height:70px"></div>
-  </div>
+  <div class="scroll" id="home-scroll"></div>
 </div>
 
 <!-- WORKOUT -->
@@ -540,24 +506,96 @@ function goTab(t){
 
 // ─── HOME ─────────────────────────────────────────────────────────────────────
 function renderHome(){
+  const sc=document.getElementById('home-scroll');
+  sc.innerHTML='';
   const d=new Date();
   const days=['ראשון','שני','שלישי','רביעי','חמישי','שישי','שבת'];
   const hr=d.getHours();
-  document.getElementById('h-greet').textContent=(hr<12?'בוקר טוב':hr<17?'צהריים טובים':'ערב טוב')+', עמית 💪';
-  document.getElementById('h-date').textContent='יום '+days[d.getDay()]+', '+d.toLocaleDateString('he-IL');
-  document.getElementById('h-wbadge').textContent='שבוע '+S.currentWeek;
-  const done=Object.keys(S.completedWos).filter(k=>k.startsWith(S.currentWeek+'_')).length;
-  document.getElementById('h-prog-txt').textContent=done+'/3';
-  document.querySelectorAll('.wdot').forEach((dt,i)=>{
-    dt.className='wdot';
-    if(i<done)dt.classList.add('done');
-    else if(i===done)dt.classList.add('cur');
+  const greeting=hr<12?'בוקר טוב':hr<17?'צהריים טובים':'ערב טוב';
+
+  // ── header ──
+  const hdr=document.createElement('div');
+  hdr.style.cssText='padding:18px 14px 10px;display:flex;justify-content:space-between;align-items:flex-start';
+  hdr.innerHTML=`
+    <div>
+      <div style="font-size:22px;font-weight:800;letter-spacing:-.4px">${greeting}, עמית 💪</div>
+      <div style="font-size:12px;color:var(--t3);margin-top:2px">יום ${days[d.getDay()]}, ${d.toLocaleDateString('he-IL')}</div>
+    </div>
+    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:5px">
+      <div style="background:var(--or);color:#fff;font-size:12px;font-weight:700;padding:4px 10px;border-radius:20px">שבוע ${S.currentWeek}</div>
+      <div style="display:flex;align-items:center;gap:4px"><span style="font-size:10px;color:var(--t4)">סנכרון</span><span class="sync-dot sync-idle" id="sync-dot"></span></div>
+    </div>`;
+  sc.appendChild(hdr);
+
+  // ── week progress dots ──
+  const wk=PLAN.weeks[S.currentWeek-1];
+  const doneInWeek=Object.keys(S.completedWos).filter(k=>k.startsWith(S.currentWeek+'_')).length;
+  const prog=document.createElement('div');
+  prog.style.cssText='padding:0 14px 14px';
+  const dots=[0,1,2].map(i=>{
+    const k=S.currentWeek+'_'+i;
+    const dn=!!S.completedWos[k],ip=!!S.savedWorkouts[k];
+    return `<div class="wdot${dn?' done':ip?' cur':''}"></div>`;
+  }).join('');
+  prog.innerHTML=`
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:7px">
+      <div style="font-size:12px;color:var(--t3);font-weight:600">השבוע: ${doneInWeek}/3 אימונים</div>
+      <button onclick="openResetWeekModal(${S.currentWeek})" style="font-size:11px;color:var(--red);background:none;border:none;cursor:pointer;font-weight:600">אפס שבוע ↩</button>
+    </div>
+    <div class="wprog" style="margin:0">${dots}<span style="font-size:12px;color:var(--t3);margin-right:6px">${doneInWeek}/3</span></div>`;
+  sc.appendChild(prog);
+
+  // ── this week's workout cards ──
+  const wlbl=document.createElement('div');wlbl.className='slbl';wlbl.textContent='אימונים השבוע';
+  sc.appendChild(wlbl);
+
+  wk.workouts.forEach((wo,wi)=>{
+    const k=S.currentWeek+'_'+wi;
+    const done=!!S.completedWos[k],inProg=!!S.savedWorkouts[k];
+    const wLogs=S.allLogs.filter(l=>l.woKey===k);
+    const rirs=wLogs.map(l=>l.rir).filter(r=>typeof r==='number');
+    const avgRir=rirs.length?(rirs.reduce((a,b)=>a+b,0)/rirs.length).toFixed(1):null;
+    let badge=done
+      ?`<span style="font-size:11px;padding:3px 9px;border-radius:20px;font-weight:600;background:rgba(34,197,94,.12);color:var(--green)">✓ הושלם</span>`
+      :inProg
+      ?`<span style="font-size:11px;padding:3px 9px;border-radius:20px;font-weight:600;background:rgba(249,115,22,.15);color:var(--or)">● בתהליך</span>`
+      :`<span style="font-size:11px;padding:3px 9px;border-radius:20px;font-weight:600;background:var(--bg5);color:var(--t4)">טרם</span>`;
+    const card=document.createElement('div');
+    card.className='card';card.style.cssText='padding:14px 16px';
+    card.innerHTML=`
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:5px">
+        <div style="font-size:16px;font-weight:800">${wo.focus}</div>${badge}
+      </div>
+      <div style="font-size:12px;color:var(--t3);margin-bottom:10px">${wo.exercises.length} תרגילים${avgRir!==null?' · RIR '+avgRir:''}</div>
+      <div style="display:flex;gap:7px">
+        ${inProg
+          ?`<button onclick="launchWorkout(${S.currentWeek-1},${wi},true)" style="flex:2;background:var(--or);color:#fff;border:none;border-radius:var(--rsm);padding:13px 8px;font-size:14px;font-weight:700;cursor:pointer">▶ המשך</button>
+             <button onclick="launchWorkout(${S.currentWeek-1},${wi},false)" style="background:var(--bg4);color:var(--t2);border:1px solid var(--bd);border-radius:var(--rsm);padding:13px 10px;font-size:12px;font-weight:600;cursor:pointer">מחדש</button>`
+          :`<button onclick="launchWorkout(${S.currentWeek-1},${wi},false)" style="flex:2;background:${done?'var(--bg4)':'var(--or)'};color:${done?'var(--t2)':'#fff'};border:${done?'1px solid var(--bd)':'none'};border-radius:var(--rsm);padding:13px 8px;font-size:14px;font-weight:700;cursor:pointer">${done?'אמן שוב':'התחל'}</button>`
+        }
+        ${done||inProg?`<button onclick="openResetWoModal('${k}',${S.currentWeek})" style="background:rgba(239,68,68,.1);color:var(--red);border:1px solid rgba(239,68,68,.3);border-radius:var(--rsm);padding:13px 10px;font-size:12px;font-weight:600;cursor:pointer">אפס</button>`:''}
+      </div>`;
+    sc.appendChild(card);
   });
-  const nxt=nextWo();
-  const nwo=PLAN.weeks[nxt.wkIdx].workouts[nxt.wIdx];
-  document.getElementById('h-start-btn').textContent='התחל אימון – '+focusShort(nwo.focus);
-  document.getElementById('h-next-name').textContent='שבוע '+S.currentWeek+' · '+nwo.focus;
-  document.getElementById('h-next-meta').innerHTML='<span>⏱ ~50 דק׳</span><span>🏋️ '+nwo.exercises.length+' תרגילים</span>';
+
+  // ── quick stats ──
+  const allDone=Object.keys(S.completedWos).length;
+  const totalPlanned=Math.min(S.currentWeek*3,36);
+  const pct=totalPlanned>0?Math.round(allDone/totalPlanned*100):0;
+  const allRirs=S.allLogs.map(l=>l.rir).filter(r=>typeof r==='number');
+  const globalRir=allRirs.length?(allRirs.reduce((a,b)=>a+b,0)/allRirs.length).toFixed(1):'–';
+  const lastW=S.bodyWeights.filter(w=>w!==null).pop();
+  const statsDiv=document.createElement('div');
+  statsDiv.innerHTML=`
+    <div class="slbl" style="margin-top:6px">סטטיסטיקות</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:7px;padding:0 14px 12px">
+      <div class="sum-stat"><div class="sum-val" style="font-size:20px">${allDone}/${totalPlanned}</div><div class="sum-lbl">אימונים</div></div>
+      <div class="sum-stat"><div class="sum-val" style="font-size:20px;color:${pct>=80?'var(--green)':pct>=50?'var(--or)':'var(--red)'}">${pct}%</div><div class="sum-lbl">עמידה</div></div>
+      <div class="sum-stat"><div class="sum-val" style="font-size:20px">${globalRir}</div><div class="sum-lbl">RIR ממוצע</div></div>
+    </div>`;
+  sc.appendChild(statsDiv);
+
+  // ── last workout ──
   const lastKey=Object.keys(S.completedWos).sort().pop();
   if(lastKey){
     const parts=lastKey.split('_');
@@ -565,15 +603,29 @@ function renderHome(){
     const llogs=S.allLogs.filter(l=>l.woKey===lastKey);
     const lr=llogs.map(l=>typeof l.rir==='number'?l.rir:3);
     const lavg=lr.length?(lr.reduce((a,b)=>a+b,0)/lr.length).toFixed(1):'–';
-    document.getElementById('h-last-card').innerHTML=
-      '<div style="font-size:13px;font-weight:600;margin-bottom:4px">שבוע '+parts[0]+' · '+(lwo?.focus||'')+'</div>'+
-      '<div style="font-size:12px;color:var(--t3)">'+llogs.length+' סטים · ממוצע RIR: '+lavg+'</div>';
+    const lastLbl=document.createElement('div');lastLbl.className='slbl';lastLbl.textContent='אימון אחרון';
+    sc.appendChild(lastLbl);
+    const lastCard=document.createElement('div');lastCard.className='card';lastCard.style.cssText='padding:12px 16px';
+    lastCard.innerHTML=`<div style="font-size:14px;font-weight:700;margin-bottom:4px">שבוע ${parts[0]} · ${lwo?.focus||''}</div>
+      <div style="font-size:12px;color:var(--t3)">${llogs.length} סטים · RIR ${lavg}${lastW?' · משקל '+lastW+' ק״ג':''}</div>`;
+    sc.appendChild(lastCard);
   }
+
+  // ── weight shortcut ──
+  const wBtn=document.createElement('div');wBtn.style.cssText='padding:10px 14px 0';
+  wBtn.innerHTML=`<button class="btn2" onclick="goTab('weight')">⚖️ הזן משקל בוקר</button>`;
+  sc.appendChild(wBtn);
+
+  // ── coach note ──
   const notes=['מבצעים את המשקל והחזרות הכתובים בדיוק. לא מוסיפים חזרות.',
     'שבוע '+S.currentWeek+' – הזן RIR בכנות אחרי כל סט.',
     'אין סטים לפי הרגשה. הרגשה נכנסת רק דרך RIR.',
     'Pull – לא מקצרים טווח. הגב מוביל, לא הידיים.'];
-  document.getElementById('h-coach').textContent=notes[S.currentWeek%notes.length];
+  const cDiv=document.createElement('div');
+  cDiv.innerHTML=`<div class="slbl" style="margin-top:8px">הערת מאמן</div><div class="coach-box"><div class="coach-text">${notes[S.currentWeek%notes.length]}</div></div>`;
+  sc.appendChild(cDiv);
+
+  const sp=document.createElement('div');sp.style.height='70px';sc.appendChild(sp);
 }
 
 // ─── WORKOUT ──────────────────────────────────────────────────────────────────
@@ -653,7 +705,7 @@ function renderWo(){
           <div class="astat-l">ק״ג</div>
           ${adjBadge}
         </div>
-        <div class="astat"><div class="astat-v">${ex.target_reps}</div><div class="astat-l">חזרות</div></div>
+        <div class="astat"><div class="astat-v">${adj?adj.reps:ex.target_reps}</div><div class="astat-l">חזרות</div></div>
         <div class="astat"><div class="astat-v">${S.setIdx+1}/${ex.sets}</div><div class="astat-l">סט</div></div>
       </div>
       ${isAdjusted?`<div class="note-tip">🤖 משקל מקורי: ${ex.target_weight} | ${adj.reason}</div>`:''}
@@ -747,7 +799,7 @@ function completeSet(){
   curAbn=null;curRIR=null;curComment='';
   as.innerHTML=`
     <div class="rir-title">הזן RIR – ${ex.exercise}</div>
-    <div class="rir-sub">כמה חזרות נקיות נותרו? עצרת ב-${ex.target_reps}.</div>
+    <div class="rir-sub">כמה חזרות נקיות נותרו? עצרת ב-${(S.exerciseAdjustments[ex.exercise]?.reps)||ex.target_reps}.</div>
     <div class="rir-grid">
       ${[0,1,2,3,4,'5+'].map((r,i)=>`<button class="rir-btn" onclick="selRIR(this,${i<5?r:"'5+'"})"> ${r}</button>`).join('')}
     </div>
@@ -1010,9 +1062,13 @@ function resetWorkoutFromModal(){
   if(!_resetWoKey)return;
   delete S.completedWos[_resetWoKey];
   delete S.savedWorkouts[_resetWoKey];
+  const parts=_resetWoKey.split('_');
+  const wo=PLAN.weeks[parseInt(parts[0])-1]?.workouts[parseInt(parts[1])];
+  if(wo) wo.exercises.forEach(ex=>delete S.exerciseAdjustments[ex.exercise]);
   save();
   renderProgram(_resetWoWeek);
-  showToast('↩ אימון אופס');
+  renderHome();
+  showToast('↩ אימון אופס (כולל משקלים)');
 }
 
 function openResetWeekModal(week){
@@ -1028,12 +1084,14 @@ function confirmResetWeek(){
     const k=_modalResetWeek+'_'+i;
     delete S.completedWos[k];
     delete S.savedWorkouts[k];
+    const wo=PLAN.weeks[_modalResetWeek-1]?.workouts[i];
+    if(wo) wo.exercises.forEach(ex=>delete S.exerciseAdjustments[ex.exercise]);
   });
   S.currentWeek=_modalResetWeek;
   save();
   renderProgram(_modalResetWeek);
   renderHome();
-  showToast('↩ שבוע '+_modalResetWeek+' אופס');
+  showToast('↩ שבוע '+_modalResetWeek+' אופס (כולל משקלים)');
 }
 
 // ─── WEIGHT ───────────────────────────────────────────────────────────────────
@@ -1152,6 +1210,13 @@ function renderProgress(){
   });
 }
 
+// ─── REP RANGES ──────────────────────────────────────────────────────────────
+function getRepRange(muscle){
+  if(['ליבה + דופק','גב + דופק','רגליים + דופק'].includes(muscle)) return null; // KB/conditioning — keep plan
+  if(['כתף אמצעית','כתף אחורית','יד קדמית','יד אחורית'].includes(muscle)) return {min:10,max:12}; // isolation
+  return {min:6,max:8}; // compounds
+}
+
 // ─── GOAL & DYNAMIC PLAN ─────────────────────────────────────────────────────
 function setGoal(g){
   S.goal=g;save();closeModal('modal-goal');
@@ -1176,7 +1241,7 @@ function adjustWeightStr(weightStr, delta){
   return weightStr.replace(/([\d.]+)/,newVal%1===0?newVal.toString():newVal.toFixed(1));
 }
 
-// run after every completed workout — adjusts weights for each exercise based on RIR
+// run after every completed workout — adjusts weights AND reps based on RIR
 function computeAdjustments(){
   if(!S.wo||!S.logs.length) return;
   const targets={strength:{lo:0,hi:2},hypertrophy:{lo:1,hi:3},fitness:{lo:2,hi:4}};
@@ -1189,20 +1254,30 @@ function computeAdjustments(){
     const avg=rirs.reduce((a,b)=>a+b,0)/rirs.length;
     const cur=S.exerciseAdjustments[ex.exercise];
     const baseWeight=cur?cur.weight:ex.target_weight;
+    const range=getRepRange(ex.muscle);
+    const curReps=cur?cur.reps:(range?range.min:ex.target_reps);
 
-    let newWeight=baseWeight,direction='hold',reason='';
+    let newWeight=baseWeight,newReps=curReps,direction='hold',reason='';
     if(avg>t.hi+0.5){
-      newWeight=adjustWeightStr(baseWeight,2.5);
-      direction='up';
-      reason=`RIR ממוצע ${avg.toFixed(1)} – קל מדי. הוגדל ב-2.5 ק״ג.`;
+      if(range&&curReps<range.max){
+        newReps=curReps+1;direction='up';
+        reason=`RIR ${avg.toFixed(1)} – קל מדי. +1 חזרה (${newReps}).`;
+      } else {
+        newWeight=adjustWeightStr(baseWeight,2.5);newReps=range?range.min:curReps;direction='up';
+        reason=`RIR ${avg.toFixed(1)} – קל מדי. +2.5 ק״ג, חזרה ל-${newReps} חזרות.`;
+      }
     } else if(avg<t.lo-0.5){
-      newWeight=adjustWeightStr(baseWeight,-2.5);
-      direction='down';
-      reason=`RIR ממוצע ${avg.toFixed(1)} – כבד מדי. הופחת ב-2.5 ק״ג.`;
+      if(range&&curReps>range.min){
+        newReps=curReps-1;direction='down';
+        reason=`RIR ${avg.toFixed(1)} – כבד מדי. -1 חזרה (${newReps}).`;
+      } else {
+        newWeight=adjustWeightStr(baseWeight,-2.5);newReps=range?range.max:curReps;direction='down';
+        reason=`RIR ${avg.toFixed(1)} – כבד מדי. -2.5 ק״ג, עד ${newReps} חזרות.`;
+      }
     } else {
-      reason=`RIR ממוצע ${avg.toFixed(1)} – בטווח היעד. נשמר על אותו משקל.`;
+      reason=`RIR ${avg.toFixed(1)} – בטווח היעד.`;
     }
-    S.exerciseAdjustments[ex.exercise]={weight:newWeight,direction,reason,avgRIR:avg.toFixed(1),updatedAt:S.woKey};
+    S.exerciseAdjustments[ex.exercise]={weight:newWeight,reps:newReps,direction,reason,avgRIR:avg.toFixed(1),updatedAt:S.woKey};
   });
 }
 
