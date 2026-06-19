@@ -203,7 +203,10 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
     <div id="s-flags" style="padding:0 14px;margin-bottom:10px"></div>
     <div class="slbl" id="s-adj-lbl" style="display:none">התאמות לאימון הבא</div>
     <div id="s-adjustments" style="padding:0 14px;margin-bottom:14px"></div>
-    <div style="padding:0 14px"><button class="btn" onclick="finishSum()">חזרה לבית</button></div>
+    <div style="padding:0 14px;display:flex;flex-direction:column;gap:8px">
+      <button class="btn" onclick="finishSum()">חזרה לבית</button>
+      <button class="btn2" onclick="syncToHealth()" style="display:flex;align-items:center;justify-content:center;gap:8px"><span style="font-size:16px">🍎</span><span>שלח ל-Apple Health</span></button>
+    </div>
     <div style="height:70px"></div>
   </div>
 </div>
@@ -290,6 +293,9 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
     <button onclick="openModal('modal-goal')" style="background:var(--bg4);border:1px solid var(--bd);border-radius:var(--rsm);padding:5px 11px;font-size:12px;font-weight:600;color:var(--t2);cursor:pointer" id="pr-goal-btn">מטרה: –</button>
   </div>
   <div class="scroll" id="prog-content">
+    <div class="slbl">לוח אימונים</div>
+    <div id="pr-calendar" style="padding:0 14px;margin-bottom:14px"></div>
+    <div class="div"></div>
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:7px;padding:0 14px 14px">
       <div class="sum-stat"><div class="sum-val" id="pr-done">0/0</div><div class="sum-lbl">אימונים</div></div>
       <div class="sum-stat"><div class="sum-val" id="pr-pct" style="color:var(--green)">0%</div><div class="sum-lbl">עמידה</div></div>
@@ -306,6 +312,30 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
   </div>
 </div>
 
+</div>
+
+<!-- MODAL: Apple Health -->
+<div class="modal-bg" id="modal-health" onclick="closeModal('modal-health')">
+  <div class="modal" onclick="event.stopPropagation()" style="max-height:80vh;overflow-y:auto">
+    <div class="modal-title">🍎 Apple Health</div>
+    <div class="modal-sub" style="margin-bottom:14px">כדי לשלוח אימונים ל-Apple Health צריך להגדיר קיצור דרך ב-Shortcuts (פעם אחת בלבד).</div>
+    <div style="background:var(--bg4);border-radius:var(--r);padding:12px 14px;margin-bottom:14px;font-size:12px;line-height:1.8;color:var(--t2)">
+      <div style="font-weight:700;margin-bottom:6px;font-size:13px">הגדרה חד-פעמית (3 דקות):</div>
+      <div>1. פתח אפליקציית <strong>קיצורים (Shortcuts)</strong></div>
+      <div>2. לחץ <strong>+</strong> ליצירת קיצור חדש</div>
+      <div>3. שם הקיצור: <strong style="color:var(--or)">Log Gym Workout</strong></div>
+      <div>4. הוסף פעולה: <strong>קבל קלט מהקיצור</strong></div>
+      <div>5. הוסף פעולה: <strong>קבל מילון מקלט</strong></div>
+      <div>6. הוסף פעולה: <strong>קבל ערך מילון</strong> → מפתח: <strong style="color:var(--or)">duration_min</strong></div>
+      <div>7. הוסף פעולה: <strong>רשום אימון</strong> → סוג: אימון כוח, משך: [ערך מהשלב הקודם]</div>
+      <div>8. לחץ <strong>סיום</strong></div>
+    </div>
+    <div id="health-wo-data" style="background:var(--bg4);border-radius:var(--r);padding:10px 14px;margin-bottom:14px;font-size:12px;color:var(--t3)"></div>
+    <div style="display:flex;flex-direction:column;gap:8px">
+      <button class="btn" id="health-send-btn" onclick="sendToHealthShortcut()">פתח Shortcuts עם נתוני האימון</button>
+      <button class="btn2" onclick="closeModal('modal-health')">סגור</button>
+    </div>
+  </div>
 </div>
 
 <!-- BOTTOM NAV -->
@@ -432,7 +462,7 @@ function setSyncIndicator(status){
 }
 
 // ─── STATE ───────────────────────────────────────────────────────────────────
-function defState(){return{tab:'home',workoutActive:false,currentWeek:2,wo:null,woKey:null,exIdx:0,setIdx:0,logs:[],allLogs:[],woStart:null,completedWos:{},savedWorkouts:{},exerciseAdjustments:{},goal:null,bodyWeights:[88.2,87.9,88.1,87.8,87.5,null,null],weightNote:null}}
+function defState(){return{tab:'home',workoutActive:false,currentWeek:2,wo:null,woKey:null,exIdx:0,setIdx:0,logs:[],allLogs:[],woStart:null,completedWos:{},savedWorkouts:{},exerciseAdjustments:{},goal:null,bodyWeights:[88.2,87.9,88.1,87.8,87.5,null,null],weightNote:null,workoutDates:{}}}
 let S=defState();
 function loadState(){
   try{
@@ -937,6 +967,9 @@ function showSum(){
     });
   } else if(adjLbl){adjLbl.style.display='none';}
 
+  // store workout date for calendar
+  S.workoutDates=S.workoutDates||{};
+  S.workoutDates[S.woKey]={date:new Date().toISOString(),duration:dur,sets:S.logs.length,focus:S.wo?.focus||S.wo?.name||'',week:S.currentWeek};
   S.completedWos[S.woKey]=true;S.workoutActive=false;
   delete S.savedWorkouts[S.woKey]; // clear in-progress save on completion
   document.getElementById('nb-workout').classList.remove('wo-live');
@@ -1147,6 +1180,9 @@ function renderWtChart(){
 
 // ─── PROGRESS ─────────────────────────────────────────────────────────────────
 function renderProgress(){
+  _calYear=_calYear||new Date().getFullYear();
+  _calMonth=_calMonth!==undefined?_calMonth:new Date().getMonth();
+  renderCalendar();
   const total=Object.keys(S.completedWos).length;
   const planned=S.currentWeek*3;
   document.getElementById('pr-done').textContent=total+'/'+(planned<=36?planned:36);
@@ -1208,6 +1244,114 @@ function renderProgress(){
     el.innerHTML='<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:3px"><div style="font-size:12px;font-weight:600">'+name+'</div><span class="esb '+cls+'">'+lbl+'</span></div><div class="bw"><div class="bf" style="width:'+Math.min(100,Math.round(avg/5*100))+'%"></div></div>';
     exList.appendChild(el);
   });
+}
+
+// ─── CALENDAR ────────────────────────────────────────────────────────────────
+let _calYear=new Date().getFullYear(),_calMonth=new Date().getMonth();
+function changeCalMonth(dir){
+  _calMonth+=dir;
+  if(_calMonth>11){_calMonth=0;_calYear++;}
+  if(_calMonth<0){_calMonth=11;_calYear--;}
+  renderCalendar();
+}
+function renderCalendar(){
+  const c=document.getElementById('pr-calendar');if(!c)return;
+  const monthNames=['ינואר','פברואר','מרץ','אפריל','מאי','יוני','יולי','אוגוסט','ספטמבר','אוקטובר','נובמבר','דצמבר'];
+  const now=new Date();
+  const firstDay=new Date(_calYear,_calMonth,1);
+  const daysInMonth=new Date(_calYear,_calMonth+1,0).getDate();
+  const startDow=firstDay.getDay(); // 0=Sun
+
+  // build training day lookup
+  const tDays={};
+  Object.entries(S.workoutDates||{}).forEach(([key,info])=>{
+    const d=new Date(info.date);
+    if(d.getFullYear()===_calYear&&d.getMonth()===_calMonth) tDays[d.getDate()]=info;
+  });
+
+  const focusColor=(f='')=>{
+    if(f.includes('Push')||f.includes('דחיפה')) return '#f97316';
+    if(f.includes('Pull')||f.includes('משיכה')) return '#3b82f6';
+    if(f.includes('Legs')||f.includes('רגל')) return '#22c55e';
+    return 'var(--or)';
+  };
+  const focusAbbr=(f='')=>{
+    if(f.includes('Push')||f.includes('דחיפה')) return 'P';
+    if(f.includes('Pull')||f.includes('משיכה')) return 'L';
+    if(f.includes('Legs')||f.includes('רגל')) return 'R';
+    return '✓';
+  };
+
+  const btnStyle='background:var(--bg4);border:1px solid var(--bd);border-radius:var(--rsm);width:30px;height:30px;color:var(--t2);font-size:16px;cursor:pointer;display:flex;align-items:center;justify-content:center';
+  let html=`<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+    <button style="${btnStyle}" onclick="changeCalMonth(-1)">›</button>
+    <div style="font-size:14px;font-weight:700">${monthNames[_calMonth]} ${_calYear}</div>
+    <button style="${btnStyle}" onclick="changeCalMonth(1)">‹</button>
+  </div>
+  <div style="display:grid;grid-template-columns:repeat(7,1fr);gap:2px;margin-bottom:4px">
+    ${['א','ב','ג','ד','ה','ו','ש'].map(d=>`<div style="font-size:10px;color:var(--t4);font-weight:700;padding:3px 0;text-align:center">${d}</div>`).join('')}
+  </div>
+  <div style="display:grid;grid-template-columns:repeat(7,1fr);gap:3px">`;
+
+  for(let i=0;i<startDow;i++) html+=`<div></div>`;
+  for(let day=1;day<=daysInMonth;day++){
+    const isToday=now.getFullYear()===_calYear&&now.getMonth()===_calMonth&&now.getDate()===day;
+    const info=tDays[day];
+    const col=info?focusColor(info.focus):'';
+    html+=`<div style="aspect-ratio:1;display:flex;flex-direction:column;align-items:center;justify-content:center;
+      border-radius:var(--rsm);font-size:12px;font-weight:${isToday||info?700:400};
+      background:${info?col:isToday?'var(--bg4)':'transparent'};
+      color:${info?'#fff':isToday?'var(--text)':'var(--t4)'};
+      border:${isToday&&!info?'1px solid var(--or)':'none'}">
+      <span>${day}</span>
+      ${info?`<span style="font-size:8px;opacity:.9">${focusAbbr(info.focus)}</span>`:''}
+    </div>`;
+  }
+  html+=`</div>`;
+
+  const total=Object.keys(tDays).length;
+  const streak=calcStreak();
+  html+=`<div style="display:flex;justify-content:space-between;margin-top:10px;font-size:11px;color:var(--t3)">
+    <span>${total} אימונים החודש</span>
+    <span>רצף: ${streak} ימים 🔥</span>
+  </div>
+  <div style="display:flex;gap:10px;margin-top:8px;font-size:10px;color:var(--t4)">
+    <span><span style="display:inline-block;width:8px;height:8px;border-radius:2px;background:#f97316;margin-left:3px"></span>Push</span>
+    <span><span style="display:inline-block;width:8px;height:8px;border-radius:2px;background:#3b82f6;margin-left:3px"></span>Pull</span>
+    <span><span style="display:inline-block;width:8px;height:8px;border-radius:2px;background:#22c55e;margin-left:3px"></span>Legs</span>
+  </div>`;
+  c.innerHTML=html;
+}
+function calcStreak(){
+  const dates=Object.values(S.workoutDates||{}).map(i=>new Date(i.date).toDateString());
+  if(!dates.length) return 0;
+  let streak=0,d=new Date();
+  while(true){
+    if(dates.includes(d.toDateString())) streak++;
+    else if(streak>0) break;
+    d.setDate(d.getDate()-1);
+    if(streak===0&&!dates.includes(d.toDateString())) break;
+  }
+  return streak;
+}
+
+// ─── APPLE HEALTH SYNC ───────────────────────────────────────────────────────
+function syncToHealth(){
+  const key=Object.keys(S.workoutDates||{}).pop();
+  const info=key?S.workoutDates[key]:null;
+  const dataEl=document.getElementById('health-wo-data');
+  if(dataEl){
+    if(info) dataEl.innerHTML=`<strong>נתוני האימון:</strong><br>סוג: אימון כוח (${info.focus})<br>משך: ${info.duration} דקות<br>סטים: ${info.sets}`;
+    else dataEl.textContent='בצע אימון כדי לשלוח נתונים.';
+  }
+  openModal('modal-health');
+}
+function sendToHealthShortcut(){
+  const key=Object.keys(S.workoutDates||{}).pop();
+  const info=key?S.workoutDates[key]:null;
+  if(!info){showToast('אין נתוני אימון');return;}
+  const payload=JSON.stringify({duration_min:info.duration,sets:info.sets,focus:info.focus,date:info.date,type:'Strength Training'});
+  window.location.href='shortcuts://run-shortcut?name=Log%20Gym%20Workout&input=text&text='+encodeURIComponent(payload);
 }
 
 // ─── REP RANGES ──────────────────────────────────────────────────────────────
