@@ -387,13 +387,13 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,sans-seri
     <svg viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>בית
   </button>
   <button class="nb" onclick="goTab('workout')" id="nb-workout">
-    <svg viewBox="0 0 24 24"><path d="M18 8h1a4 4 0 010 8h-1M2 8h16v9a4 4 0 01-4 4H6a4 4 0 01-4-4V8zM6 1v3M10 1v3M14 1v3"/></svg>אימון
+    <svg viewBox="0 0 24 24"><line x1="6" y1="12" x2="18" y2="12"/><line x1="6" y1="8" x2="6" y2="16"/><line x1="18" y1="8" x2="18" y2="16"/><line x1="2" y1="10" x2="2" y2="14"/><line x1="22" y1="10" x2="22" y2="14"/><line x1="2" y1="12" x2="6" y2="12"/><line x1="18" y1="12" x2="22" y2="12"/></svg>אימון
   </button>
   <button class="nb" onclick="goTab('program')" id="nb-program">
     <svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>תכנית
   </button>
   <button class="nb" onclick="goTab('weight')" id="nb-weight">
-    <svg viewBox="0 0 24 24"><path d="M12 2a5 5 0 015 5v1h2a1 1 0 011 1v11a1 1 0 01-1 1H5a1 1 0 01-1-1V9a1 1 0 011-1h2V7a5 5 0 015-5z"/></svg>משקל
+    <svg viewBox="0 0 24 24"><rect x="2" y="10" width="20" height="11" rx="2"/><path d="M8 10a4 4 0 018 0"/><line x1="12" y1="14" x2="12" y2="17"/><line x1="9" y1="17" x2="15" y2="17"/></svg>משקל
   </button>
   <button class="nb" onclick="goTab('progress')" id="nb-progress">
     <svg viewBox="0 0 24 24"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>התקדמות
@@ -1082,7 +1082,7 @@ function renderProgram(focusWeek){
       <div style="font-size:12px;color:var(--t3);margin-bottom:6px">${wo.exercises.length} תרגילים · ${wo.exercises[0]?.rest||''} מנוחה</div>
       ${avgRir!==null?`<div style="font-size:12px;color:var(--t4);margin-bottom:8px">ממוצע RIR: <span style="color:var(--or);font-weight:600">${avgRir}</span> · ${logsForWo.length} סטים</div>`:''}
       <div style="display:flex;flex-direction:column;gap:3px;margin-bottom:12px">
-        ${wo.exercises.slice(0,3).map(e=>{const adj=S.exerciseAdjustments[e.exercise];const w=adj?.weight||e.target_weight;const changed=adj&&adj.weight&&adj.weight!==e.target_weight;return`<div style="font-size:12px;color:var(--t3)">· ${e.exercise} – <span style="${changed?"color:var(--or);font-weight:600":""}">${w}</span></div>`;}).join('')}
+        ${wo.exercises.slice(0,3).map(e=>`<div style="font-size:12px;color:var(--t3)">· ${e.exercise} – ${e.target_weight}</div>`).join('')}
         ${wo.exercises.length>3?`<div style="font-size:11px;color:var(--t4)">ועוד ${wo.exercises.length-3} תרגילים...</div>`:''}
       </div>
       <div style="display:flex;gap:7px">
@@ -1094,7 +1094,7 @@ function renderProgram(focusWeek){
           ? `<button onclick="launchWorkout(${focusWeek-1},${wi},false)" style="flex:1;background:var(--bg4);color:var(--t2);border:1px solid var(--bd);border-radius:var(--rsm);padding:11px 8px;font-size:12px;font-weight:600;cursor:pointer">התחל מחדש</button>`
           : ''
         }
-        ${(done||inProgress)
+        ${(done||inProgress||logsForWo.length>0)
           ? `<button onclick="openResetWoModal('${k}',${focusWeek})" style="background:rgba(239,68,68,.1);color:var(--red);border:1px solid rgba(239,68,68,.3);border-radius:var(--rsm);padding:11px 10px;font-size:12px;font-weight:600;cursor:pointer">אפס</button>`
           : ''
         }
@@ -1141,13 +1141,15 @@ function resetWorkoutFromModal(){
   if(!_resetWoKey)return;
   delete S.completedWos[_resetWoKey];
   delete S.savedWorkouts[_resetWoKey];
+  delete S.workoutDates[_resetWoKey];
+  S.allLogs=S.allLogs.filter(l=>l.woKey!==_resetWoKey);
   const parts=_resetWoKey.split('_');
   const wo=PLAN.weeks[parseInt(parts[0])-1]?.workouts[parseInt(parts[1])];
   if(wo) wo.exercises.forEach(ex=>delete S.exerciseAdjustments[ex.exercise]);
   save();
   renderProgram(_resetWoWeek);
   renderHome();
-  showToast('↩ אימון אופס (כולל משקלים)');
+  showToast('↩ אימון אופס');
 }
 
 function openResetWeekModal(week){
