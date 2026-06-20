@@ -190,6 +190,57 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,sans-seri
 .adj-down{background:rgba(239,68,68,.1);color:var(--red)}
 .adj-hold{background:rgba(90,93,106,.12);color:var(--t4)}
 
+/* ── Motion system ── */
+:root{
+  --ease-out:cubic-bezier(0.23,1,0.32,1);
+  --ease-drawer:cubic-bezier(0.32,0.72,0,1);
+}
+
+/* Tab screen fade-in */
+.screen.active{animation:screenFade 180ms var(--ease-out) both}
+@keyframes screenFade{from{opacity:0}to{opacity:1}}
+
+/* Modal slide-up */
+.modal-bg.active .modal{animation:modalUp 300ms var(--ease-drawer) both}
+@keyframes modalUp{from{transform:translateY(100%)}to{transform:translateY(0)}}
+
+/* Upgrade primary btn easing */
+.btn{transition:filter 150ms var(--ease-out),transform 120ms var(--ease-out)}
+
+/* Secondary btn — add press scale */
+.btn2{transition:background 150ms var(--ease-out),border-color 150ms var(--ease-out),transform 120ms var(--ease-out)}
+.btn2:active{background:var(--bg5);border-color:var(--bda);transform:scale(.98)}
+
+/* Danger btn — add press scale */
+.btn-red{transition:background 150ms var(--ease-out),transform 120ms var(--ease-out)}
+.btn-red:active{background:rgba(239,68,68,.18);transform:scale(.98)}
+
+/* RIR — fix transition:all, add press feedback */
+.rir-btn{transition:background 150ms var(--ease-out),border-color 150ms var(--ease-out),color 100ms,box-shadow 150ms,transform 120ms var(--ease-out)}
+.rir-btn:active:not(.sel){transform:scale(.95)}
+
+/* ABN — fix transition:all, add press feedback */
+.abn-btn{transition:background 150ms var(--ease-out),border-color 150ms var(--ease-out),color 100ms,transform 120ms var(--ease-out)}
+.abn-btn:active{transform:scale(.96)}
+
+/* Week nav — fix transition:all, add press feedback */
+.wn-btn{transition:background 150ms var(--ease-out),border-color 150ms var(--ease-out),color 100ms,transform 120ms var(--ease-out)}
+.wn-btn:active{transform:scale(.96)}
+
+/* Toast slide-in */
+.toast{transform:translateX(-50%) translateY(8px);transition:opacity .22s var(--ease-out),transform .25s var(--ease-out)}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+
+/* Goal option press scale */
+.goal-opt{transition:border-color 150ms var(--ease-out),background 150ms var(--ease-out),transform 120ms var(--ease-out)}
+.goal-opt:active{border-color:rgba(249,115,22,.5);background:var(--bg4);transform:scale(.99)}
+
+/* Reduce motion */
+@media(prefers-reduced-motion:reduce){
+  *,::before,::after{animation-duration:1ms !important;transition-duration:50ms !important}
+}
+
+
 /* ── Goal buttons ── */
 .goal-opt{background:var(--bg3);border:1px solid var(--bd);border-radius:var(--r);padding:14px 16px;width:100%;cursor:pointer;text-align:right;display:block;margin-bottom:9px;transition:border-color .15s,background .15s}
 .goal-opt:active{border-color:rgba(249,115,22,.5);background:var(--bg4)}
